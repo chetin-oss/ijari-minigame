@@ -731,7 +731,10 @@ const signW=t=>[...t].reduce((a,ch)=>a+(/[가-힣]/.test(ch)?15:ch===' '?5:9),0)
 let NEAR=[],NEAR_W=1;
 const shuffle=arr=>{for(let i=arr.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[arr[i],arr[j]]=[arr[j],arr[i]]}return arr};
 function buildNear(){
-  const list=shuffle(SHOPS.map(n=>({sign:n,bar:false})).concat(BARS.map(n=>({sign:n,bar:true}))));
+  // 가게는 판마다 새로 섞고, 바 5곳은 가게 5~7개마다 한 번씩 (5곳 모두 돌고 나면 다시 섞어서) 끼워 넣음
+  const shops=shuffle(SHOPS.slice());let bars=shuffle(BARS.slice()),bi=0,gap=2+Math.floor(Math.random()*3);
+  const list=[];
+  shops.forEach(n=>{list.push({sign:n,bar:false});if(--gap<=0){list.push({sign:bars[bi],bar:true});bi++;if(bi>=bars.length){bi=0;const last=bars[bars.length-1];bars=shuffle(bars);if(bars[0]===last)bars.push(bars.shift())}gap=5+Math.floor(Math.random()*3)}});
   list.splice(1,0,{sign:'ijARi',bar:false,ij:true});
   NEAR=[];let x=0;
   for(const it of list){const w=clamp(signW(it.sign)+40,110,230)+Math.floor(Math.random()*20);
