@@ -38,7 +38,7 @@ canvas{image-rendering:pixelated;image-rendering:crisp-edges}
 .hero{background:var(--brand);border:3px solid var(--ink);box-shadow:6px 6px 0 #22120a;padding:18px 20px;display:flex;align-items:center;gap:18px;color:var(--paper);position:relative;overflow:hidden}
 .hero .logo{width:120px;flex:none}
 .lobby{display:grid;gap:8px}
-.lobby canvas{width:100%;height:auto;aspect-ratio:1402/1122;display:block;border:3px solid var(--ink);box-shadow:6px 6px 0 #22120a;background:#efe9dd;touch-action:manipulation}
+.lobby canvas{width:100%;height:auto;aspect-ratio:993/800;display:block;border:3px solid var(--ink);box-shadow:6px 6px 0 #22120a;background:#efe9dd;touch-action:manipulation}
 .lobbyHint{margin:0;color:#e8d4b8;font-size:13px;text-align:center;line-height:1.6}
 .lobbyHint b{color:#ffb38f;font-weight:700}
 .rtabs{display:flex;gap:6px;flex-wrap:wrap}
@@ -149,7 +149,7 @@ canvas{image-rendering:pixelated;image-rendering:crisp-edges}
     <div><h1><small>ijARi MINIGAME HEAVEN</small>이자리 미니게임천국</h1><p>이자리 게임 재미있다!</p></div>
   </header>
   <section class="lobby" aria-label="이자리 가게 안">
-    <canvas id="lobby" width="1402" height="1122" aria-label="이자리 가게 안 — 카운터, 냉장고, 턴테이블, 포스터를 눌러 게임을 시작하세요"></canvas>
+    <canvas id="lobby" width="993" height="800" aria-label="이자리 가게 안 — 카운터, 냉장고, 턴테이블, 포스터를 눌러 게임을 시작하세요"></canvas>
     <p class="lobbyHint">가게 안을 눌러 보세요 · <b>카운터</b> 게임1 · <b>냉장고</b> 게임2 · <b>턴테이블</b> 게임3 · <b>포스터</b> 순위표</p>
   </section>
   <section class="cards" id="cards"></section>
@@ -1257,60 +1257,45 @@ function thumbRhythm(){const c=document.createElement('canvas');c.width=120;c.he
   x.drawImage(DANCERS_IMG[0],8,28,18,18);x.drawImage(BAM,30,28,18,18);x.drawImage(ME,52,28,18,18);x.drawImage(DANCERS_IMG[3],74,28,18,18);x.drawImage(DANCERS_IMG[4],96,28,18,18);return c}
 
 /* ================= 메인 로비: 이자리 가게 안 (그림 배경 + 죠니) ================= */
-const LOB_W=1402,LOB_H=1122,lcv=$('#lobby'),lx=lcv.getContext('2d');
+const LOB_W=993,LOB_H=800,LS=LOB_W/1402,lcv=$('#lobby'),lx=lcv.getContext('2d');
 /* GitHub Pages(…github.io)에서는 메인 그림 화면을 숨기고 게임 목록만 보여줌 */
 const SHOW_LOBBY=!/github\.io$/i.test(location.hostname);
 if(!SHOW_LOBBY){const sec=document.querySelector('.lobby');if(sec)sec.hidden=true}
-const LOB_BG=new Image();let lobReady=false;LOB_BG.onload=()=>{lobReady=true};if(SHOW_LOBBY)LOB_BG.src='ijari-lobby.webp';
+const LOB_BG=new Image();let lobReady=false;LOB_BG.onload=()=>{lobReady=true};if(SHOW_LOBBY)LOB_BG.src='ijari-lobby2.webp';
 let lobbyRaf=0,lobbyHover=null,bamSayT=-9,johnnySayT=-9;
+/* 그림(993×800) 속 위치: 죠니·밤쥐는 그림에 그려져 있음 */
 const HOT=[
- {id:'slide',x:230,y:370,w:660,h:330,tag:'1',label:'오늘따라 손님이 많네',tx:400,ty:556},
- {id:'ice',x:880,y:395,w:96,h:290,tag:'2',label:'얼음 사러 가기',tx:960,ty:640},
- {id:'rhythm',x:652,y:412,w:166,h:90,tag:'3',label:'음악모임',tx:735,ty:396,extra:[[205,65,86,105],[910,65,92,112]]},
- {id:'rank',x:1170,y:135,w:156,h:206,tag:'★',label:'순위표',tx:1248,ty:118},
- {id:'list',x:1085,y:400,w:160,h:265,tag:'▤',label:'게임 목록',tx:1165,ty:384},
- {id:'bam',x:140,y:700,w:110,h:110,tag:'',label:''},
+ {id:'slide',x:140,y:190,w:490,h:330,tag:'1',label:'오늘따라 손님이 많네',tx:290,ty:410},
+ {id:'ice',x:618,y:280,w:72,h:212,tag:'2',label:'얼음 사러 가기',tx:660,ty:500},
+ {id:'rhythm',x:462,y:285,w:122,h:72,tag:'3',label:'음악모임',tx:590,ty:224,extra:[[143,48,60,74],[648,48,62,74]]},
+ {id:'rank',x:834,y:95,w:110,h:152,tag:'★',label:'순위표',tx:888,ty:86},
+ {id:'list',x:768,y:282,w:114,h:190,tag:'▤',label:'게임 목록',tx:826,ty:276},
+ {id:'bam',x:78,y:498,w:96,h:116,tag:'',label:''},
 ];
-/* 로비용 고해상도 죠니 (배경 그림 톤: 테두리·명암·따뜻한 빛) */
-const JOHNNY_HD=spriteCanvas(["........KKKKKKKK........", "......KKLLLBBBBBKK......", ".....KLLBBBBBBBBBbK.....", "....KLBBBBBBBBBBBBbK....", "....KBBBBBBBBBBBBBbK....", "...KRRRRRRRRRRRRRRRRK...", "...KbRbRbRbRbRbRbRbRK...", "...KHHSSSSSSSSSSSSHHK...", "..KHHSSSSSSSSSSSSSSHHK..", "..KHSSEESSSSSSSSEESSHK..", "..KHSSEWSSSSSSSSEWSSHK..", "..KHHCCSSSSSSSSSSCCHHK..", "..KHHSSSSMSSSSMSSSSHHK..", "..KHHsSSSSMMMMSSSSsHHK..", "..KHHHsSSSSSSSSSSsHHHK..", "..KHHHHHKsSSSSsKHHHHHK..", ".KHHHTTTTTTTTTTTTTTHHHK.", "KTTHHTTTTTTTTTTTTTTHHttK", "KTTTHTTTTTTGGTTTTTTHtttK", "KTTTTTTTTTGTTGTTTTTTtttK", "KSSTTTTTTTTGGTTTTTTTTsSK", "KSSTTTTTTTTTTTTTTTTTTsSK"],{K:'#3a1a0e',B:'#e2552a',b:'#b83a1a',L:'#ff8a4a',R:'#c84420',H:'#4a2614',S:'#f6c79a',s:'#e0a070',E:'#2a140c',W:'#fff3e0',C:'#f08a6a',M:'#b4503a',T:'#fff4e2',t:'#e2cba8',G:'#e8501f'},24,22);
-const J_SC=5.6,J_W=24*5.6,J_X=477-24*5.6/2,CTR_Y=481,J_TOP=CTR_Y-20*5.6;
-function drawJohnny(t){
-  const x=lx,bob=Math.round(Math.max(0,Math.sin(t*2.2))*3),top=J_TOP-bob;
-  x.drawImage(JOHNNY_HD,J_X,top,J_W,22*J_SC);
-  // 눈 깜빡임
-  if((t%3.4)<.13){x.fillStyle='#f6c79a';[[6,9],[16,9]].forEach(([c,r])=>x.fillRect(J_X+c*J_SC,top+r*J_SC,2*J_SC,2*J_SC));x.fillStyle='#2a140c';[[6,10],[16,10]].forEach(([c,r])=>x.fillRect(J_X+c*J_SC,top+r*J_SC,2*J_SC,J_SC*.6))}
-  // 카운터 앞(아래쪽)을 그림으로 다시 덮어서 죠니가 바 뒤에 서 있게
-  x.drawImage(LOB_BG,J_X-8,CTR_Y,J_W+16,40,J_X-8,CTR_Y,J_W+16,40);
-  // 카운터 위에 올린 두 손
-  [[J_X+2,CTR_Y-6],[J_X+J_W-30,CTR_Y-6]].forEach(([a,b])=>{x.fillStyle='#3a1a0e';x.fillRect(a-3,b-3,34,17);x.fillStyle='#f6c79a';x.fillRect(a,b,28,11);x.fillStyle='#e0a070';x.fillRect(a,b+8,28,3)});
-  // 말풍선
-  const say=(t-johnnySayT<2.2)||((t%9)>6.6&&(t%9)<8.6);
-  if(say){const txt='어서오세요~ 이자리예요!';x.font='30px "Do Hyeon", sans-serif';const w=x.measureText(txt).width+32,bx=477-w/2,by=top-70;
-    x.fillStyle='#22120a';x.fillRect(bx-4,by-4,w+8,52);x.fillStyle='#fff9ec';x.fillRect(bx,by,w,44);
-    x.beginPath();x.moveTo(bx+w/2-10,by+44);x.lineTo(bx+w/2+10,by+44);x.lineTo(bx+w/2,by+58);x.fill();
-    x.fillStyle='#22120a';x.textAlign='center';x.textBaseline='middle';x.fillText(txt,bx+w/2,by+23)}
-}
+function bubble(txt,cx,by,bg){const x=lx;x.font=Math.round(22)+'px "Do Hyeon", sans-serif';const w=x.measureText(txt).width+24,bx=clamp(cx-w/2,6,LOB_W-w-6);
+  x.fillStyle='#22120a';x.fillRect(bx-3,by-3,w+6,38);x.fillStyle=bg;x.fillRect(bx,by,w,32);
+  x.beginPath();x.moveTo(clamp(cx,bx+12,bx+w-12)-8,by+32);x.lineTo(clamp(cx,bx+12,bx+w-12)+8,by+32);x.lineTo(clamp(cx,bx+12,bx+w-12),by+43);x.fill();
+  x.fillStyle='#22120a';x.textAlign='center';x.textBaseline='middle';x.fillText(txt,bx+w/2,by+17)}
 function drawLobby(t){
   const x=lx;x.imageSmoothingEnabled=false;
-  if(!lobReady){x.fillStyle='#3a2216';x.fillRect(0,0,LOB_W,LOB_H);x.fillStyle='#fff9ec';x.font='40px "Do Hyeon", sans-serif';x.textAlign='center';x.textBaseline='middle';x.fillText('이자리 문 여는 중…',LOB_W/2,LOB_H/2);return}
-  x.drawImage(LOB_BG,0,0);
-  // 펜던트 조명 은은하게 깜빡
-  const gl=x.createRadialGradient(560,160,10,560,160,260);gl.addColorStop(0,`rgba(255,214,150,${.10+.05*Math.sin(t*2)})`);gl.addColorStop(1,'rgba(255,214,150,0)');x.fillStyle=gl;x.fillRect(300,0,520,420);
-  drawJohnny(t);
-  // 밤쥐 (소파 위)
-  const bb=Math.round(Math.max(0,Math.sin(t*4+1))*4);x.drawImage(BAM,150,712-bb,88,88);
-  if(t-bamSayT<1.8){const txt='사장님 저 왔어요!';x.font='28px "Do Hyeon", sans-serif';const w=x.measureText(txt).width+28;
-    x.fillStyle='#22120a';x.fillRect(150-4,640,w+8,50);x.fillStyle='#fff3c4';x.fillRect(150,644,w,42);x.fillStyle='#22120a';x.textAlign='left';x.textBaseline='middle';x.fillText(txt,164,666)}
+  if(!lobReady){x.fillStyle='#3a2216';x.fillRect(0,0,LOB_W,LOB_H);x.fillStyle='#fff9ec';x.font='30px "Do Hyeon", sans-serif';x.textAlign='center';x.textBaseline='middle';x.fillText('이자리 문 여는 중…',LOB_W/2,LOB_H/2);return}
+  x.drawImage(LOB_BG,0,0,LOB_W,LOB_H);
+  // 펜던트 조명 은은하게
+  const gl=x.createRadialGradient(400,105,8,400,105,190);gl.addColorStop(0,`rgba(255,214,150,${.10+.05*Math.sin(t*2)})`);gl.addColorStop(1,'rgba(255,214,150,0)');x.fillStyle=gl;x.fillRect(210,0,380,300);
+  // 죠니 인사
+  if((t-johnnySayT<2.2)||((t%9)>6.6&&(t%9)<8.6))bubble('어서오세요~ 이자리예요!',414,148,'#fff9ec');
+  // 밤쥐
+  if(t-bamSayT<1.8)bubble('사장님 저 왔어요!',122,452,'#fff3c4');
   // 호버 강조 & 라벨
   for(const h of HOT){
     if(!h.tag)continue;
     const hov=lobbyHover===h.id;
-    if(hov){x.strokeStyle='#e8501f';x.lineWidth=6;x.setLineDash([16,10]);x.strokeRect(h.x,h.y,h.w,h.h);(h.extra||[]).forEach(([a,b,c,d])=>x.strokeRect(a,b,c,d));x.setLineDash([])}
-    const k=clamp(760/(lcv.clientWidth||760),1,1.9),LHh=46*k;
-    const bob=Math.round(Math.sin(t*3+h.tx)*5),txt=h.tag+'  '+h.label;
-    x.font=Math.round(34*k)+'px "Do Hyeon", sans-serif';const w=x.measureText(txt).width+36*k;const bx=clamp(h.tx-w/2,8,LOB_W-w-8),by=h.ty-LHh+bob;
-    x.fillStyle='#22120a';x.fillRect(bx+4,by+4,w,LHh);x.fillStyle=hov?'#e8501f':'#fff9ec';x.fillRect(bx,by,w,LHh);
-    x.strokeStyle='#22120a';x.lineWidth=4;x.strokeRect(bx,by,w,LHh);
+    if(hov){x.strokeStyle='#e8501f';x.lineWidth=4;x.setLineDash([12,8]);x.strokeRect(h.x,h.y,h.w,h.h);(h.extra||[]).forEach(([a,b,c,d])=>x.strokeRect(a,b,c,d));x.setLineDash([])}
+    const k=clamp(760/(lcv.clientWidth||760),1,1.9)*LS,LHh=46*k;
+    const bob=Math.round(Math.sin(t*3+h.tx)*4),txt=h.tag+'  '+h.label;
+    x.font=Math.round(34*k)+'px "Do Hyeon", sans-serif';const w=x.measureText(txt).width+36*k;const bx=clamp(h.tx-w/2,6,LOB_W-w-6),by=h.ty-LHh+bob;
+    x.fillStyle='#22120a';x.fillRect(bx+3,by+3,w,LHh);x.fillStyle=hov?'#e8501f':'#fff9ec';x.fillRect(bx,by,w,LHh);
+    x.strokeStyle='#22120a';x.lineWidth=3;x.strokeRect(bx,by,w,LHh);
     x.fillStyle=hov?'#fff9ec':'#22120a';x.textAlign='left';x.textBaseline='middle';x.fillText(txt,bx+18*k,by+LHh/2+2);
     const ax=clamp(h.tx,bx+14,bx+w-14);x.fillStyle=hov?'#e8501f':'#fff9ec';x.beginPath();x.moveTo(ax-10*k,by+LHh);x.lineTo(ax+10*k,by+LHh);x.lineTo(ax,by+LHh+14*k);x.fill();
   }
@@ -1322,7 +1307,7 @@ function lobbyLoop(now){
 function startLobby(){if(SHOW_LOBBY&&!lobbyRaf)lobbyRaf=requestAnimationFrame(lobbyLoop)}
 function hotAt(e){const r=lcv.getBoundingClientRect();const px=(e.clientX-r.left)/r.width*LOB_W,py=(e.clientY-r.top)/r.height*LOB_H;
   const inR=(a,b,c,d)=>px>=a&&px<=a+c&&py>=b&&py<=b+d;
-  for(const h of [...HOT].reverse()){if(h.tag&&inR(h.tx-130,h.ty-50,260,60))return h}
+  for(const h of [...HOT].reverse()){if(h.tag&&inR(h.tx-95,h.ty-38,190,44))return h}
   for(const h of [...HOT].reverse()){if(inR(h.x,h.y,h.w,h.h)||(h.extra||[]).some(q=>inR(...q)))return h}return null}
 lcv.addEventListener('pointermove',e=>{const h=hotAt(e);lobbyHover=h&&h.tag?h.id:null;lcv.style.cursor=h?'pointer':'default'});
 lcv.addEventListener('pointerleave',()=>{lobbyHover=null});
