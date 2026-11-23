@@ -1268,20 +1268,21 @@ const HOT=[
  {id:'list',x:1085,y:400,w:160,h:265,tag:'▤',label:'게임 목록',tx:1165,ty:384},
  {id:'bam',x:140,y:700,w:110,h:110,tag:'',label:''},
 ];
-const J_X=413,J_TOP=377,J_SC=8,CTR_Y=481;
+/* 로비용 고해상도 죠니 (배경 그림 톤: 테두리·명암·따뜻한 빛) */
+const JOHNNY_HD=spriteCanvas(["........KKKKKKKK........", "......KKLLLBBBBBKK......", ".....KLLBBBBBBBBBbK.....", "....KLBBBBBBBBBBBBbK....", "....KBBBBBBBBBBBBBbK....", "...KRRRRRRRRRRRRRRRRK...", "...KbRbRbRbRbRbRbRbRK...", "...KHHSSSSSSSSSSSSHHK...", "..KHHSSSSSSSSSSSSSSHHK..", "..KHSSEESSSSSSSSEESSHK..", "..KHSSEWSSSSSSSSEWSSHK..", "..KHHCCSSSSSSSSSSCCHHK..", "..KHHSSSSMSSSSMSSSSHHK..", "..KHHsSSSSMMMMSSSSsHHK..", "..KHHHsSSSSSSSSSSsHHHK..", "..KHHHHHKsSSSSsKHHHHHK..", ".KHHHTTTTTTTTTTTTTTHHHK.", "KTTHHTTTTTTTTTTTTTTHHttK", "KTTTHTTTTTTGGTTTTTTHtttK", "KTTTTTTTTTGTTGTTTTTTtttK", "KSSTTTTTTTTGGTTTTTTTTsSK", "KSSTTTTTTTTTTTTTTTTTTsSK"],{K:'#3a1a0e',B:'#e2552a',b:'#b83a1a',L:'#ff8a4a',R:'#c84420',H:'#4a2614',S:'#f6c79a',s:'#e0a070',E:'#2a140c',W:'#fff3e0',C:'#f08a6a',M:'#b4503a',T:'#fff4e2',t:'#e2cba8',G:'#e8501f'},24,22);
+const J_SC=5.6,J_W=24*5.6,J_X=477-24*5.6/2,CTR_Y=481,J_TOP=CTR_Y-20*5.6;
 function drawJohnny(t){
-  const x=lx,bob=Math.round(Math.max(0,Math.sin(t*2.2))*3);
-  x.drawImage(JOHNNY,J_X,J_TOP-bob,16*J_SC,16*J_SC);
+  const x=lx,bob=Math.round(Math.max(0,Math.sin(t*2.2))*3),top=J_TOP-bob;
+  x.drawImage(JOHNNY_HD,J_X,top,J_W,22*J_SC);
   // 눈 깜빡임
-  if((t%3.4)<.12){x.fillStyle='#f2c9a0';x.fillRect(J_X+4*J_SC,J_TOP-bob+4*J_SC,J_SC,J_SC);x.fillRect(J_X+11*J_SC,J_TOP-bob+4*J_SC,J_SC,J_SC)}
+  if((t%3.4)<.13){x.fillStyle='#f6c79a';[[6,9],[16,9]].forEach(([c,r])=>x.fillRect(J_X+c*J_SC,top+r*J_SC,2*J_SC,2*J_SC));x.fillStyle='#2a140c';[[6,10],[16,10]].forEach(([c,r])=>x.fillRect(J_X+c*J_SC,top+r*J_SC,2*J_SC,J_SC*.6))}
   // 카운터 앞(아래쪽)을 그림으로 다시 덮어서 죠니가 바 뒤에 서 있게
-  x.drawImage(LOB_BG,J_X-8,CTR_Y,16*J_SC+16,40,J_X-8,CTR_Y,16*J_SC+16,40);
+  x.drawImage(LOB_BG,J_X-8,CTR_Y,J_W+16,40,J_X-8,CTR_Y,J_W+16,40);
   // 카운터 위에 올린 두 손
-  x.fillStyle='#2a1a10';[[J_X+6,CTR_Y-4],[J_X+16*J_SC-26,CTR_Y-4]].forEach(([a,b])=>x.fillRect(a-2,b-2,24,14));
-  x.fillStyle='#f2c9a0';[[J_X+6,CTR_Y-4],[J_X+16*J_SC-26,CTR_Y-4]].forEach(([a,b])=>x.fillRect(a,b,20,10));
+  [[J_X+2,CTR_Y-6],[J_X+J_W-30,CTR_Y-6]].forEach(([a,b])=>{x.fillStyle='#3a1a0e';x.fillRect(a-3,b-3,34,17);x.fillStyle='#f6c79a';x.fillRect(a,b,28,11);x.fillStyle='#e0a070';x.fillRect(a,b+8,28,3)});
   // 말풍선
   const say=(t-johnnySayT<2.2)||((t%9)>6.6&&(t%9)<8.6);
-  if(say){const txt='어서오세요~ 이자리예요!';x.font='30px "Do Hyeon", sans-serif';const w=x.measureText(txt).width+32,bx=J_X+56-w/2,by=J_TOP-bob-70;
+  if(say){const txt='어서오세요~ 이자리예요!';x.font='30px "Do Hyeon", sans-serif';const w=x.measureText(txt).width+32,bx=477-w/2,by=top-70;
     x.fillStyle='#22120a';x.fillRect(bx-4,by-4,w+8,52);x.fillStyle='#fff9ec';x.fillRect(bx,by,w,44);
     x.beginPath();x.moveTo(bx+w/2-10,by+44);x.lineTo(bx+w/2+10,by+44);x.lineTo(bx+w/2,by+58);x.fill();
     x.fillStyle='#22120a';x.textAlign='center';x.textBaseline='middle';x.fillText(txt,bx+w/2,by+23)}
