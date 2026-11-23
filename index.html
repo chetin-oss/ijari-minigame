@@ -344,7 +344,8 @@ const GAMES=[
  {id:'ice',how:'#ovHow2',unit:'m',no:'GAME 2',name:'얼음 금방 사올게, 나는 러너니까.',desc:'얼음이 다 떨어졌다! 사장 죠니가 군자 골목을 달려요. 장애물은 점프로 피하고, 녹는 얼음은 얼음을 주워 채우세요.',ready:true},
  {id:'rhythm',how:'#ovHow3',unit:'',no:'GAME 3',name:'음악모임은 처음입니다만',desc:'이자리에 갔는데, 오늘은 영업을 안 하는 날이네요..? 대신 분위기 좋은 음악 모임이 열리고 있어요. 함께 비트를 맞추며, 음악모임 회원인 척 해요. 박자를 못 맞추면 걸려요!',ready:true},
 ];
-const rankKey=id=>'ijari-mg-rank-'+id;
+const rankKey=id=>'ijari-mg-rank2-'+id; // 2026-11-24 순위 리셋 (이전 기록은 'ijari-mg-rank-')
+const SEASON_START=Date.parse('2026-11-23T22:27:00Z'); // 이 시각 이전 전체 순위 기록은 숨김
 /* ---------- 전체 순위 (Firebase Firestore REST) ---------- */
 const FB={apiKey:'AIzaSyAsJcf35vGf6nw_n5RYLyW0PaIRg3FzrKQ',projectId:'ijari-b9a3a'};
 const FS_DOCS=`projects/${FB.projectId}/databases/(default)/documents`;
@@ -356,8 +357,8 @@ async function fsFetch(url,body){
 }
 const globalCache={};
 async function fetchGlobal(gid){
-  const j=await fsFetch(`${FS_URL}/games/${gid}:runQuery`,{structuredQuery:{from:[{collectionId:'scores'}],orderBy:[{field:{fieldPath:'score'},direction:'DESCENDING'}],limit:30}});
-  const list=(Array.isArray(j)?j:[]).filter(x=>x.document).map(x=>{const f=x.document.fields||{};return {id:x.document.name.split('/').pop(),
+  const j=await fsFetch(`${FS_URL}/games/${gid}:runQuery`,{structuredQuery:{from:[{collectionId:'scores'}],orderBy:[{field:{fieldPath:'score'},direction:'DESCENDING'}],limit:300}});
+  const list=(Array.isArray(j)?j:[]).filter(x=>x.document&&Date.parse(((x.document.fields||{}).ts||{}).timestampValue||0)>=SEASON_START).slice(0,30).map(x=>{const f=x.document.fields||{};return {id:x.document.name.split('/').pop(),
     name:String((f.name||{}).stringValue||'???').slice(0,8),score:+((f.score||{}).integerValue||0),time:+((f.time||{}).integerValue||0),date:(f.date||{}).stringValue||''}});
   globalCache[gid]=list;return list;
 }
