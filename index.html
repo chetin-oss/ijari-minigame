@@ -39,8 +39,24 @@ canvas{image-rendering:pixelated;image-rendering:crisp-edges}
 body.lobbyMode #hub{max-width:none;min-height:100vh;min-height:100dvh;padding:0;display:flex;align-items:center;justify-content:center;background:#1a0e07}
 body.lobbyMode #hub>.hero,body.lobbyMode #hub>.cards,body.lobbyMode #hub>.foot{display:none}
 body.lobbyMode .lobby canvas{width:min(100vw,calc(100dvh*993/800));border:none;box-shadow:none}
-.pick{display:grid;gap:8px}
-.pick .btn{text-align:left}
+.gbCard{max-width:540px}
+.gbBoard{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding:14px;background:#b98550;background-image:radial-gradient(rgba(90,50,20,.25) 1px,transparent 1.5px);background-size:7px 7px;border:4px solid #5e3019;box-shadow:inset 0 0 0 2px #8a5a30}
+.gbNote{aspect-ratio:1;border:none;box-shadow:2px 3px 0 rgba(0,0,0,.28);transform:rotate(var(--rot));padding:12px 8px 6px;display:flex;flex-direction:column;justify-content:space-between;gap:4px;text-align:left;cursor:pointer;color:#2a1a10;position:relative;min-width:0;transition:transform .1s}
+.gbNote::before{content:"";position:absolute;top:3px;left:50%;width:8px;height:8px;margin-left:-4px;border-radius:50%;background:#d23b26;box-shadow:0 1px 0 rgba(0,0,0,.35)}
+.gbNote:hover{transform:rotate(0) scale(1.04)}
+.gbNote.empty{background:rgba(255,249,236,.18);border:2px dashed rgba(255,249,236,.65);box-shadow:none}
+.gbNote.empty::before{display:none}
+.gbNote.pick{outline:3px solid var(--brand);outline-offset:2px}
+.gbMsg{font-family:var(--f-display);font-size:15px;line-height:1.25;word-break:break-all;overflow:hidden;display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical}
+.gbWho{font-size:11px;color:#5a4330;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gbCompose{display:grid;gap:8px;background:#fff;border:2px solid var(--ink);padding:10px}
+.gbCompose textarea,.gbCompose input{font-family:var(--f-display);font-size:18px;padding:6px 8px;border:2px solid var(--ink);width:100%;min-width:0;resize:none;background:#fffdf6}
+.gbRow{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.gbRow input{flex:1 1 120px;width:auto}
+.gbColors{display:flex;gap:5px}
+.gbSw{width:24px;height:24px;border:2px solid var(--ink);cursor:pointer;padding:0}
+.gbSw.on{outline:3px solid var(--brand);outline-offset:1px}
+@media (max-width:420px){.gbMsg{font-size:13px}.gbBoard{gap:7px;padding:10px}}
 .hero{background:var(--brand);border:3px solid var(--ink);box-shadow:6px 6px 0 #22120a;padding:18px 20px;display:flex;align-items:center;gap:18px;color:var(--paper);position:relative;overflow:hidden}
 .hero .logo{width:120px;flex:none}
 .lobby{display:grid;gap:8px}
@@ -261,12 +277,21 @@ body.lobbyMode .lobby canvas{width:min(100vw,calc(100dvh*993/800));border:none;b
   </div>
 </div>
 
-<!-- 게임 고르기 (오락기) -->
-<div class="overlay" id="ovPick" hidden>
-  <div class="card">
-    <h2><small>ARCADE</small>어떤 게임 할까?</h2>
-    <div class="pick" id="pickList"></div>
-    <div class="row-btns"><button class="btn" type="button" onclick="document.getElementById('ovPick').hidden=true">돌아가기</button></div>
+<!-- 방명록 -->
+<div class="overlay" id="ovGuest" hidden>
+  <div class="card gbCard">
+    <h2><small>GUESTBOOK</small>이자리 메모판</h2>
+    <p class="note">다녀간 흔적을 남겨 주세요. 메모는 딱 9장만 붙어요. 새로 붙이려면 누군가의 메모 위에 덮어야 해요.</p>
+    <div class="gbBoard" id="gbBoard"></div>
+    <p class="note" id="gbStatus"></p>
+    <div id="gbCompose" class="gbCompose" hidden>
+      <p class="note" id="gbWarn"></p>
+      <textarea id="gbMsgIn" maxlength="40" rows="2" placeholder="한마디 (40자까지)"></textarea>
+      <div class="gbRow"><input id="gbName" maxlength="8" placeholder="이름 (8자까지)" autocomplete="off"><div class="gbColors" id="gbColors"></div></div>
+      <div class="row-btns"><button class="btn hot" id="gbPost" type="button">붙이기</button><button class="btn" id="gbCancel" type="button">취소</button></div>
+    </div>
+    <p class="note" id="gbNote2"></p>
+    <div class="row-btns"><button class="btn" id="gbClose" type="button">닫기</button></div>
   </div>
 </div>
 
@@ -411,7 +436,7 @@ function renderHub(){
     box.appendChild(c);
   });
 }
-const OVS=['#ovHow','#ovHow2','#ovHow3','#ovOver','#ovRankView','#ovPause','#ovPick'];
+const OVS=['#ovHow','#ovHow2','#ovHow3','#ovOver','#ovRankView','#ovPause','#ovGuest'];
 function show(id){OVS.forEach(s=>$(s).hidden=s!==id)}
 
 /* ================= GAME 1 : 오늘따라 손님이 많네, 감사합니다 ================= */
@@ -1270,6 +1295,75 @@ function thumbRhythm(){const c=document.createElement('canvas');c.width=120;c.he
   x.drawImage(JOHNNY,50,2,20,20);x.fillStyle='#e8501f';x.fillRect(44,18,32,8);
   x.drawImage(DANCERS_IMG[0],8,28,18,18);x.drawImage(BAM,30,28,18,18);x.drawImage(ME,52,28,18,18);x.drawImage(DANCERS_IMG[3],74,28,18,18);x.drawImage(DANCERS_IMG[4],96,28,18,18);return c}
 
+/* ================= 방명록 (왼쪽 벽 메모판: 9장만, 새로 붙이려면 덮어쓰기) ================= */
+const GB_SLOTS=['s0','s1','s2','s3','s4','s5','s6','s7','s8'];
+const GB_COLORS=['#fff3a8','#ffd0c2','#cfeec2','#c8e4ff','#f2d6ff','#ffffff'];
+const GB_LOCAL='ijari-guestbook-local';
+let gbData={},gbOnline=false,gbPick=null,gbColor=0;
+async function fsGet(url){
+  const ac=new AbortController();const to=setTimeout(()=>ac.abort(),8000);
+  try{const r=await fetch(url+(url.includes('?')?'&':'?')+'key='+FB.apiKey,{signal:ac.signal});if(!r.ok)throw new Error('http '+r.status);return await r.json()}finally{clearTimeout(to)}
+}
+function gbLocal(){try{return JSON.parse(store.get(GB_LOCAL)||'{}')||{}}catch(e){return {}}}
+async function gbLoad(){
+  try{
+    const j=await fsGet(`${FS_URL}/guestbook?pageSize=20`);
+    const d={};(j.documents||[]).forEach(doc=>{const id=doc.name.split('/').pop();if(!GB_SLOTS.includes(id))return;const f=doc.fields||{};
+      d[id]={name:String((f.name||{}).stringValue||'').slice(0,8),msg:String((f.msg||{}).stringValue||'').slice(0,40),color:+((f.color||{}).integerValue||0)%GB_COLORS.length,date:(f.date||{}).stringValue||''}});
+    gbData=d;gbOnline=true;
+  }catch(e){gbData=gbLocal();gbOnline=false}
+}
+async function gbSave(slot,rec){
+  try{
+    await fsFetch(`${FS_URL}:commit`,{writes:[{update:{name:`${FS_DOCS}/guestbook/${slot}`,fields:{name:{stringValue:rec.name},msg:{stringValue:rec.msg},color:{integerValue:String(rec.color)},date:{stringValue:rec.date}}},
+      updateTransforms:[{fieldPath:'ts',setToServerValue:'REQUEST_TIME'}]}]});
+    return true;
+  }catch(e){const l=gbLocal();l[slot]=rec;store.set(GB_LOCAL,JSON.stringify(l));return false}
+}
+function gbRender(){
+  const board=$('#gbBoard');board.innerHTML='';
+  GB_SLOTS.forEach((id,i)=>{
+    const n=gbData[id],b=document.createElement('button');b.type='button';
+    b.className='gbNote'+(n?'':' empty')+(gbPick===id?' pick':'');
+    b.style.setProperty('--rot',(((i*37)%7)-3)+'deg');
+    if(n){b.style.background=GB_COLORS[n.color]||GB_COLORS[0];
+      const m=document.createElement('span');m.className='gbMsg';m.textContent=n.msg;
+      const w=document.createElement('span');w.className='gbWho';w.textContent='— '+n.name+(n.date?' · '+n.date.slice(5).replace('-','/'):'');
+      b.append(m,w);b.setAttribute('aria-label',`${i+1}번 메모: ${n.name} "${n.msg}" — 눌러서 덮어 붙이기`);
+    }else{const m=document.createElement('span');m.className='gbMsg';m.textContent='';b.appendChild(m);b.setAttribute('aria-label',`${i+1}번 빈 자리 — 눌러서 붙이기`)}
+    b.onclick=()=>{gbPick=id;gbRender();gbCompose()};
+    board.appendChild(b);
+  });
+  $('#gbStatus').textContent=gbOnline?'':'지금은 이 기기에만 붙어요 (서버 연결 안 됨)';
+}
+function gbCompose(){
+  const n=gbData[gbPick];const c=$('#gbCompose');c.hidden=false;
+  $('#gbWarn').textContent=n?`${n.name}님의 메모 위에 덮어 붙여요`:'빈 자리에 붙여요';
+  const sw=$('#gbColors');sw.innerHTML='';
+  GB_COLORS.forEach((col,i)=>{const s=document.createElement('button');s.type='button';s.className='gbSw'+(i===gbColor?' on':'');s.style.background=col;s.setAttribute('aria-label','메모 색 '+(i+1));s.onclick=()=>{gbColor=i;gbCompose()};sw.appendChild(s)});
+  $('#gbName').value=$('#gbName').value||store.get('ijari-mg-nick')||'';
+  setTimeout(()=>$('#gbMsgIn').focus(),30);
+}
+async function openGuest(){
+  gbPick=null;$('#gbCompose').hidden=true;$('#gbMsgIn').value='';$('#gbNote2').textContent='';
+  $('#gbBoard').innerHTML='<p class="note" style="grid-column:1/-1;text-align:center">메모판 보는 중…</p>';show('#ovGuest');
+  await gbLoad();gbRender();
+}
+$('#gbPost').onclick=async()=>{
+  const msg=$('#gbMsgIn').value.trim().slice(0,40),name=$('#gbName').value.trim().slice(0,8);
+  if(!gbPick){$('#gbNote2').textContent='붙일 자리를 먼저 눌러 주세요.';return}
+  if(!msg){$('#gbNote2').textContent='한마디를 적어 주세요.';$('#gbMsgIn').focus();return}
+  if(!name){$('#gbNote2').textContent='이름(닉네임)을 적어 주세요.';$('#gbName').focus();return}
+  store.set('ijari-mg-nick',name);
+  const rec={name,msg,color:gbColor,date:new Date().toISOString().slice(0,10)};
+  $('#gbPost').disabled=true;$('#gbNote2').textContent='붙이는 중…';
+  const ok=await gbSave(gbPick,rec);$('#gbPost').disabled=false;
+  gbData[gbPick]=rec;gbPick=null;$('#gbCompose').hidden=true;$('#gbMsgIn').value='';gbRender();
+  $('#gbNote2').textContent=ok?'메모를 붙였어요!':'서버에 연결이 안 돼서 이 기기에만 붙였어요.';
+  beep(988,.08,'triangle');setTimeout(()=>beep(1318,.1,'triangle'),90);
+};
+$('#gbCancel').onclick=()=>{gbPick=null;$('#gbCompose').hidden=true;gbRender()};
+$('#gbClose').onclick=()=>show('');
 /* ================= 메인 로비: 이자리 가게 안 (그림 배경 + 죠니) ================= */
 const LOB_W=993,LOB_H=800,LS=LOB_W/1402,lcv=$('#lobby'),lx=lcv.getContext('2d');
 /* GitHub Pages(…github.io)에서는 메인 그림 화면을 숨기고 게임 목록만 보여줌 */
@@ -1283,7 +1377,7 @@ const HOT=[
  {id:'ice',x:618,y:280,w:72,h:212,tag:'2',label:'얼음 사러 가기',tx:660,ty:500},
  {id:'rhythm',x:462,y:285,w:122,h:72,tag:'3',label:'음악모임',tx:590,ty:224,extra:[[143,48,60,74],[648,48,62,74]]},
  {id:'rank',x:834,y:95,w:110,h:152,tag:'★',label:'순위표',tx:888,ty:86},
- {id:'list',x:768,y:282,w:114,h:190,tag:'▤',label:'게임 목록',tx:826,ty:276},
+ {id:'guest',x:36,y:162,w:104,h:196,tag:'',label:''},
 ];
 function bubble(txt,cx,by,bg){const x=lx;x.font=Math.round(22)+'px "Do Hyeon", sans-serif';const w=x.measureText(txt).width+24,bx=clamp(cx-w/2,6,LOB_W-w-6);
   x.fillStyle='#22120a';x.fillRect(bx-3,by-3,w+6,38);x.fillStyle=bg;x.fillRect(bx,by,w,32);
@@ -1308,9 +1402,8 @@ lcv.addEventListener('pointermove',e=>{const h=hotAt(e);lcv.style.cursor=h?'poin
 lcv.addEventListener('pointerleave',()=>{lobbyHover=null});
 lcv.addEventListener('click',e=>{const h=hotAt(e);if(!h)return;audioOn();
   if(h.id==='rank'){openRanks('slide');return}
-  if(h.id==='list'){openPick();return}
+  if(h.id==='guest'){openGuest();return}
   const g=GAMES.find(z=>z.id===h.id);if(g){if(g.id==='rhythm'&&typeof USE_MUSIC_FILE!=='undefined'&&USE_MUSIC_FILE)loadMusic();show(g.how)}});
-function openPick(){const box=$('#pickList');box.innerHTML='';GAMES.filter(g=>g.ready).forEach(g=>{const b=document.createElement('button');b.type='button';b.className='btn';b.textContent=g.no+' · '+g.name;b.onclick=()=>show(g.how);box.appendChild(b)});show('#ovPick')}
 function openRanks(gid){
   const tabs=$('#rvTabs');tabs.innerHTML='';
   GAMES.filter(g=>g.ready).forEach(g=>{const b=document.createElement('button');b.type='button';b.className='rtab'+(g.id===gid?' on':'');b.textContent=g.no;b.onclick=()=>openRanks(g.id);tabs.appendChild(b)});
