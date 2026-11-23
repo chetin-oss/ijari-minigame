@@ -801,6 +801,19 @@ function updateIce(dt){
   const g=$('#iGauge');g.style.width=I.ice+'%';g.classList.toggle('low',I.ice<28);
 }
 function announceMark(m){ann2(m+'m!');beep(988,.08,'triangle');setTimeout(()=>beep(1318,.1,'triangle'),90);if(m===300)setTimeout(()=>ann2('골목 러시!'),900)}
+/* 군자 레드 에일 포스터 (바 5곳 가게에 붙음) — 작게, 모양만 */
+function drawPoster(x,px,py){
+  const P=(pts,c)=>{x.fillStyle=c;x.beginPath();pts.forEach(([a,b],i)=>i?x.lineTo(px+a,py+b):x.moveTo(px+a,py+b));x.closePath();x.fill()};
+  x.fillStyle='rgba(0,0,0,.35)';x.fillRect(px+1,py+1,24,32);
+  x.fillStyle='#f4f0e6';x.fillRect(px,py,24,32);
+  P([[7,9],[16,6],[22,12],[21,26],[13,31],[5,26],[3,16]],'#e2462a');
+  P([[1,4],[12,3],[13,8],[7,11],[2,10]],'#b5d334');
+  x.strokeStyle='#111';x.lineWidth=1;x.beginPath();x.moveTo(px+16,py+2);x.lineTo(px+19,py+5);x.lineTo(px+23,py+3);x.stroke();
+  x.fillStyle='#2a4ad0';x.fillRect(px+18,py+4,2,2);
+  x.fillStyle='#111';[[13,7],[17,10],[11,10],[20,9],[4,15]].forEach(([a,b])=>x.fillRect(px+a,py+b,1.6,1.6));
+  [[1,1,9],[1,2.6,6],[12,16,9],[12,17.6,6],[1,26,8],[1,27.6,5]].forEach(([a,b,w])=>x.fillRect(px+a,py+b,w,.9));
+  x.strokeStyle='rgba(0,0,0,.25)';x.strokeRect(px+.5,py+.5,23,31);
+}
 function drawIce(){
   const x=c2;x.imageSmoothingEnabled=false;
   // 하늘
@@ -830,7 +843,8 @@ function drawIce(){
     }
     let fs=16;x.font=fs+'px "Do Hyeon", sans-serif';const tw=x.measureText(s.sign).width;if(tw>sw-10){fs=Math.max(10,Math.floor(fs*(sw-10)/tw));x.font=fs+'px "Do Hyeon", sans-serif'}
     x.textAlign='center';x.textBaseline='middle';x.fillText(s.sign,cxs,GROUND-99);x.shadowBlur=0;
-    x.fillStyle='rgba(255,230,160,.55)';x.fillRect(sx+10,GROUND-74,s.w-26,40);x.fillStyle='#1a1418';x.fillRect(sx+10,GROUND-34,s.w-26,4)}}
+    x.fillStyle='rgba(255,230,160,.55)';x.fillRect(sx+10,GROUND-74,s.w-26,40);x.fillStyle='#1a1418';x.fillRect(sx+10,GROUND-34,s.w-26,4)
+    if(s.bar){drawPoster(x,sx+12,GROUND-80);if(s.w>150)drawPoster(x,sx+s.w-44,GROUND-80)}}}
   // 인도
   x.fillStyle='#8a8478';x.fillRect(0,GROUND,W,H-GROUND);x.fillStyle='#6a655c';
   const go=I.bgx%32;for(let gx=-go;gx<W;gx+=32)x.fillRect(gx,GROUND,2,H-GROUND);x.fillRect(0,GROUND,W,3);
