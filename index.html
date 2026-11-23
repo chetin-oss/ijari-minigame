@@ -206,7 +206,8 @@ canvas{image-rendering:pixelated;image-rendering:crisp-edges}
     <div class="howto">
       <div><b>박자</b><span>떨어지는 노트가 하얀 선에 닿는 순간, 그 줄(왼쪽·점프·오른쪽)을 눌러 같이 흔들어요.</span></div>
       <div><b>판정</b><span>딱 맞으면 PERFECT, 조금 어긋나면 GOOD. 놓치거나 엇박에 누르면 동물들이 쳐다봐요.</span></div>
-      <div><b>수상함</b><span>실수할수록 수상함 게이지가 차요. 100이 되면 정체가 들통나서 끝! 잘 맞히면 다시 내려가요.</span></div>
+      <div><b>길게</b><span>꼬리가 달린 노트는 칸에 닿을 때 눌러서, 꼬리가 끝날 때까지 꾹 누르고 있어요. 중간에 떼면 끊겨요!</span></div>
+      <div><b>수상함</b><span>실수할수록 수상함 게이지가 차요. 100이 되면 정체가 들통나서 끝! PERFECT만 게이지를 내려줘요. 라운드가 오를수록 가만히 있어도 조금씩 의심받아요.</span></div>
       <div><b>음악</b><span>곡이 바뀔 때마다 BPM이 빨라져요. 꼭 소리를 켜고 하세요!</span></div>
     </div>
     <p class="note" id="how3Msg"></p>
@@ -945,17 +946,18 @@ function genNotes(R,b,t,spb){
   R.busy=R.busy||[0,0,0];
   if(onBeat){const l=pickLane(R,t);
     if(l>=0){
-      const holdP=0; // 홀드 노트 끔
+      const holdP=lv<1?0:[0,.15,.2,.24,.28,.32,.35,.38][Math.min(lv,7)];
       const anyHold=R.busy.some(v=>v>t);
       if(!anyHold&&Math.random()<holdP){const beats=lv>=3&&Math.random()<.4?3:2;const dur=spb*beats;
         R.notes.push({t,lane:l,dur,hold:'wait'});R.busy[l]=t+dur+spb*.45;
       }else{
         R.notes.push({t,lane:l});
-        if(lv>=3&&Math.random()<.12){const l2=pickLane(R,t);if(l2>=0&&l2!==l)R.notes.push({t,lane:l2})}
+        if(lv>=3&&Math.random()<Math.min(.3,.08+lv*.03)){const l2=pickLane(R,t);if(l2>=0&&l2!==l)R.notes.push({t,lane:l2})}
       }
     }}
   const off=[0,0,.28,.42,.55,.65,.72,.78][Math.min(lv,7)];
   if(Math.random()<off){const l=pickLane(R,t+spb/2);if(l>=0)R.notes.push({t:t+spb/2,lane:l})}
+  if(lv>=5&&Math.random()<.2){const l=pickLane(R,t+spb*.75);if(l>=0)R.notes.push({t:t+spb*.75,lane:l})}
 }
 function rSchedule(){
   const R=Rm;if(!R||R.over||R.paused)return;
@@ -974,7 +976,7 @@ function rSchedule(){
     const q=R.queue.shift();if(audioOK()){try{(R.music?playDrums:playBeat)(q.b,Math.max(AC.currentTime,toAudio(q.t)),q.spb,q.lv)}catch(e){}}R.beats.push({t:q.t,spb:q.spb});if(R.beats.length>8)R.beats.shift();
   }
 }
-function scrollT(R){return Math.max(1,1.6-R.level*.1)}
+function scrollT(R){return Math.max(.8,1.6-R.level*.11)}
 
 /* ---- 입력 ---- */
 function rTap(lane,pid){
@@ -984,17 +986,17 @@ function rTap(lane,pid){
   for(const n of R.notes){if(n.done||n.lane!==lane)continue;const d=Math.abs(n.t-now);if(d<bd){bd=d;best=n}}
   if(best&&bd<=.15){
     best.done=true;
-    if(bd<=.055){R.perfect++;R.combo++;R.score+=100+Math.floor(R.combo/10)*10;R.sus=Math.max(0,R.sus-4);R.judge={txt:'PERFECT',col:'#fff9ec',t:now,lane};(R.fx3=R.fx3||[]).push({lane,t:now,perfect:true,seed:Math.random()*6})}
-    else{R.good++;R.combo++;R.score+=50;R.sus=Math.max(0,R.sus-1.5);R.judge={txt:'GOOD',col:'#f2a93b',t:now,lane};(R.fx3=R.fx3||[]).push({lane,t:now,perfect:false,seed:Math.random()*6})}
+    if(bd<=.055){R.perfect++;R.combo++;R.score+=100+Math.floor(R.combo/10)*10;R.sus=Math.max(0,R.sus-Math.max(1.2,2.6-R.level*.18));R.judge={txt:'PERFECT',col:'#fff9ec',t:now,lane};(R.fx3=R.fx3||[]).push({lane,t:now,perfect:true,seed:Math.random()*6})}
+    else{R.good++;R.combo++;R.score+=50;R.sus+=1;R.judge={txt:'GOOD',col:'#f2a93b',t:now,lane};(R.fx3=R.fx3||[]).push({lane,t:now,perfect:false,seed:Math.random()*6})}
     R.maxCombo=Math.max(R.maxCombo,R.combo);
     if(best.dur){best.hold='holding';best.tick=best.t+best.dur/4;(R.holding=R.holding||[null,null,null])[lane]={n:best,pid}}
-  }else{R.sus+=4;R.judge={txt:'엇박!',col:'#ff9a7a',t:now,lane};R.stare=now}
+  }else{R.sus+=6;R.judge={txt:'엇박!',col:'#ff9a7a',t:now,lane};R.stare=now}
   if(R.sus>=100)rOver();
 }
 /* ---- 홀드(길게 누르기) ---- */
 function holdOK(lane,n){const R=Rm;n.hold='ok';R.holding[lane]=null;R.combo++;R.maxCombo=Math.max(R.maxCombo,R.combo);R.score+=100;R.sus=Math.max(0,R.sus-3);
   const now=rNow();R.judge={txt:'HOLD OK',col:'#fff9ec',t:now,lane};(R.fx3=R.fx3||[]).push({lane,t:now,perfect:true,seed:Math.random()*6});beep(1318,.06,'triangle',.04)}
-function holdBreak(lane,n){const R=Rm;n.hold='broken';R.holding[lane]=null;R.combo=0;R.sus+=8;const now=rNow();R.stare=now;R.judge={txt:'끊겼다!',col:'#ff9a7a',t:now,lane};if(R.sus>=100)rOver()}
+function holdBreak(lane,n){const R=Rm;n.hold='broken';R.holding[lane]=null;R.combo=0;R.sus+=12;const now=rNow();R.stare=now;R.judge={txt:'끊겼다!',col:'#ff9a7a',t:now,lane};if(R.sus>=100)rOver()}
 function rRelease(lane){const R=Rm;if(!R||!R.holding||!R.holding[lane])return;const {n}=R.holding[lane];const now=rNow();
   if(now>=n.t+n.dur-.15)holdOK(lane,n);else holdBreak(lane,n)}
 function releasePointer(pid){const R=Rm;if(!R||!R.holding)return;for(let l=0;l<3;l++){const h=R.holding[l];if(h&&h.pid===pid)rRelease(l)}}
@@ -1020,13 +1022,15 @@ document.addEventListener('keyup',e=>{
 /* ---- 업데이트 & 그리기 ---- */
 function rUpdate(){
   const R=Rm,now=rNow();
-  for(const n of R.notes){if(!n.done&&now-n.t>.15){n.done=true;n.missed=true;R.miss++;R.combo=0;R.sus+=13;R.stare=now;R.judge={txt:'MISS',col:'#a0907a',t:now,lane:n.lane}}}
+  for(const n of R.notes){if(!n.done&&now-n.t>.15){n.done=true;n.missed=true;R.miss++;R.combo=0;R.sus+=18;R.stare=now;R.judge={txt:'MISS',col:'#a0907a',t:now,lane:n.lane}}}
   for(const n of R.notes){if(n.dur&&n.missed&&n.hold==='wait')n.hold='missed'}
   if(R.holding)for(let l=0;l<3;l++){const h=R.holding[l];if(!h)continue;const n=h.n;
     while(now>=n.tick&&n.tick<n.t+n.dur){R.score+=15;n.tick+=n.dur/4}
     if(now>=n.t+n.dur)holdOK(l,n)}
   R.notes=R.notes.filter(n=>!(n.done&&now-(n.t+(n.dur||0))>.5));
   if(R.anns.length&&R.anns[0].t<=now){const a=R.anns.shift();ann3(a.txt)}
+  // 라운드가 오를수록 가만히 있어도 조금씩 의심받음
+  const du=R.lastU?clamp(now-R.lastU,0,.1):0;R.lastU=now;if(R.level>=2)R.sus+=((R.level-1)*.8+Math.max(0,R.level-6)*1.2)*du;
   if(R.sus>=100){R.sus=100;rOver();return}
   $('#rScore').textContent=R.score.toLocaleString('ko-KR');$('#rCombo').textContent=R.combo;
   const s=$('#rSus');s.style.width=Math.min(100,R.sus)+'%';s.classList.toggle('hi',R.sus>=65);
