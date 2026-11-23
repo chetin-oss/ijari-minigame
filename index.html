@@ -100,6 +100,11 @@ canvas{image-rendering:pixelated;image-rendering:crisp-edges}
 .keys2{width:var(--pw);color:#c8a983;font-size:12px;text-align:center}
 @media (pointer:coarse){.keys2{display:none}}
 
+#play3{display:flex;flex-direction:column;align-items:center;gap:8px;padding:8px max(12px,env(safe-area-inset-left,0px)) 12px;min-height:100%}
+.susbar{color:#ffb3a3}
+.susbar i{width:0;background:linear-gradient(90deg,#f2a93b,#e8501f)}
+.susbar i.hi{background:#d23b26;animation:pulse2 .3s infinite alternate}
+
 /* ---- Overlays ---- */
 .overlay{position:fixed;inset:0;background:rgba(30,16,8,.72);display:flex;align-items:center;justify-content:center;padding:16px;z-index:20;overflow:auto}
 .card{background:var(--paper);border:3px solid var(--ink);box-shadow:6px 6px 0 #22120a;max-width:440px;width:100%;padding:20px;display:grid;gap:12px}
@@ -181,6 +186,34 @@ canvas{image-rendering:pixelated;image-rendering:crisp-edges}
   </div>
 </div>
 
+<section id="play3" hidden>
+  <div class="phud">
+    <span class="chip"><span class="logo" role="img" aria-label="ijARi"></span></span>
+    <span class="gname">하우스 파티 잠입</span>
+    <span class="st"><span>점수</span><b id="rScore">0</b></span>
+    <span class="st"><span>콤보</span><b id="rCombo">0</b></span>
+    <button class="pbtn2" id="pauseBtn3" type="button">II</button>
+  </div>
+  <div class="icebar susbar"><span>수상함</span><div><i id="rSus"></i></div></div>
+  <div class="cvwrap"><canvas id="cv3" width="360" height="480" aria-label="하우스 파티 잠입 게임 화면"></canvas><div id="announce3" class="ann" hidden></div></div>
+  <div class="keys2">키보드: ← ↑ → (또는 A S D) · P 일시정지 · 소리를 켜고 하세요!</div>
+</section>
+
+<div class="overlay" id="ovHow3" hidden>
+  <div class="card">
+    <h2><small>GAME 3</small>하우스 파티 잠입</h2>
+    <p>오랜만에 이자리에 왔는데… 오늘은 영업을 안 하는 날! 대관한 음악모임이 한창이에요. DJ는 죠니, 손님은 밤쥐랑 동물 친구들. 들키지 않게 자연스럽게 섞여야 해요.</p>
+    <div class="howto">
+      <div><b>박자</b><span>떨어지는 노트가 하얀 선에 닿는 순간, 그 줄(왼쪽·점프·오른쪽)을 눌러 같이 흔들어요.</span></div>
+      <div><b>판정</b><span>딱 맞으면 PERFECT, 조금 어긋나면 GOOD. 놓치거나 엇박에 누르면 동물들이 쳐다봐요.</span></div>
+      <div><b>수상함</b><span>실수할수록 수상함 게이지가 차요. 100이 되면 정체가 들통나서 끝! 잘 맞히면 다시 내려가요.</span></div>
+      <div><b>음악</b><span>곡이 바뀔 때마다 BPM이 빨라져요. 꼭 소리를 켜고 하세요!</span></div>
+    </div>
+    <p class="note" id="how3Msg"></p>
+    <div class="row-btns"><button class="btn hot" id="btnGo3" type="button">파티 입장!</button><button class="btn" id="btnHowBack3" type="button">돌아가기</button></div>
+  </div>
+</div>
+
 <!-- 게임 설명 -->
 <div class="overlay" id="ovHow" hidden>
   <div class="card">
@@ -247,7 +280,7 @@ function beep(f,d,type='square',v=.05){try{if(!AC)return;const o=AC.createOscill
 const GAMES=[
  {id:'slide',how:'#ovHow',unit:'',no:'GAME 1',name:'쭉쭉 서빙',desc:'사장 죠니가 밀려드는 손님에게 술을 쭉 밀어 서빙! 처음엔 병맥주만, 점점 손님이 늘고 와인까지. 주문보다 술이 많이 나가면 끝.',ready:true},
  {id:'ice',how:'#ovHow2',unit:'m',no:'GAME 2',name:'얼음 사러 다녀오기',desc:'얼음이 다 떨어졌다! 사장 죠니가 군자 골목을 달려요. 장애물은 점프로 피하고, 녹는 얼음은 얼음을 주워 채우세요.',ready:true},
- {id:'g3',no:'GAME 3',name:'준비 중',desc:'다음 게임을 준비하고 있어요.',ready:false},
+ {id:'rhythm',how:'#ovHow3',unit:'',no:'GAME 3',name:'하우스 파티 잠입',desc:'영업 안 하는 날, 이자리는 대관 음악모임 중! DJ 죠니의 하우스 비트에 맞춰 동물들과 똑같이 흔들어야 정체가 안 들켜요.',ready:true},
 ];
 const rankKey=id=>'ijari-mg-rank-'+id;
 /* ---------- 전체 순위 (Firebase Firestore REST) ---------- */
@@ -334,7 +367,7 @@ function renderHub(){
   GAMES.forEach(g=>{
     const c=document.createElement('article');c.className='gcard'+(g.ready?'':' soon');
     const th=document.createElement('div');th.className='thumb';
-    if(g.ready)th.appendChild(g.id==='ice'?thumbIce():thumbSlide());else th.textContent='?';
+    if(g.ready)th.appendChild(g.id==='ice'?thumbIce():g.id==='rhythm'?thumbRhythm():thumbSlide());else th.textContent='?';
     const no=document.createElement('div');no.className='no';no.textContent=g.no;
     const h=document.createElement('h2');h.textContent=g.name;
     const p=document.createElement('p');p.textContent=g.desc;
@@ -350,7 +383,7 @@ function renderHub(){
     box.appendChild(c);
   });
 }
-const OVS=['#ovHow','#ovHow2','#ovOver','#ovRankView','#ovPause'];
+const OVS=['#ovHow','#ovHow2','#ovHow3','#ovOver','#ovRankView','#ovPause'];
 function show(id){OVS.forEach(s=>$(s).hidden=s!==id)}
 
 /* ================= GAME 1 : 쭉쭉 서빙 ================= */
@@ -574,14 +607,15 @@ function fit(){
 }
 window.addEventListener('resize',fit);
 function startGame(){
-  audioOn();fit();cancelAnimationFrame(raf);cancelAnimationFrame(raf2);I=null;CUR='slide';$('#play2').hidden=true;
+  audioOn();fit();cancelAnimationFrame(raf);cancelAnimationFrame(raf2);stopRhythm();Rm=null;I=null;CUR='slide';$('#play2').hidden=true;$('#play3').hidden=true;
   S=newState();S.last=performance.now();
   $('#hub').hidden=true;$('#play').hidden=false;show('');$('#announce').hidden=true;
   announce('영업 시작!');renderGauge();
   raf=requestAnimationFrame(loop);
 }
-function curS(){return CUR==='ice'?I:S}
-function togglePause(){const st=curS();if(!st||st.over)return;st.paused=!st.paused;show(st.paused?'#ovPause':'');if(!st.paused)st.last=performance.now()}
+function curS(){return CUR==='ice'?I:CUR==='rhythm'?Rm:S}
+function togglePause(){const st=curS();if(!st||st.over)return;st.paused=!st.paused;show(st.paused?'#ovPause':'');if(!st.paused)st.last=performance.now();
+  if(CUR==='rhythm'&&AC){try{st.paused?AC.suspend():AC.resume()}catch(e){}}}
 let lastRec=null;
 function gameOver(cause){
   if(S.over)return;S.over=true;draw();
@@ -624,7 +658,10 @@ $('#btnSaveRank').onclick=async()=>{
 };
 $('#nickIn').addEventListener('keydown',e=>{if(e.key==='Enter')$('#btnSaveRank').click()});
 $('#btnGo').onclick=startGame;
-$('#btnAgain').onclick=()=>CUR==='ice'?startIce():startGame();
+$('#btnAgain').onclick=()=>CUR==='ice'?startIce():CUR==='rhythm'?startRhythm():startGame();
+$('#btnGo3').onclick=startRhythm;
+$('#btnHowBack3').onclick=()=>show('');
+$('#pauseBtn3').onclick=togglePause;
 $('#btnGo2').onclick=startIce;
 $('#btnHowBack2').onclick=()=>show('');
 $('#pauseBtn2').onclick=togglePause;
@@ -636,7 +673,7 @@ $('#btnResume').onclick=togglePause;
 $('#pauseBtn').onclick=togglePause;
 $('#bamBtn').onclick=()=>{audioOn();callBam()};
 document.addEventListener('visibilitychange',()=>{const st=curS();if(document.hidden&&st&&!st.over&&!st.paused)togglePause()});
-function toHub(){cancelAnimationFrame(raf);cancelAnimationFrame(raf2);S=null;I=null;$('#play').hidden=true;$('#play2').hidden=true;$('#hub').hidden=false;show('');renderHub()}
+function toHub(){cancelAnimationFrame(raf);cancelAnimationFrame(raf2);stopRhythm();if(AC&&AC.state==='suspended')AC.resume();S=null;I=null;Rm=null;$('#play').hidden=true;$('#play2').hidden=true;$('#play3').hidden=true;$('#hub').hidden=false;show('');renderHub()}
 
 /* ================= GAME 2 : 얼음 사러 다녀오기 ================= */
 const JR_PAL={b:'#e8501f',B:'#b83a12',h:'#3a2216',s:'#f2c9a0',e:'#1a1010',c:'#f09a8a',m:'#c0504a',w:'#fbf7ee',o:'#cfc6b4',k:'#2a2a3a',d:'#1a1010'};
@@ -767,7 +804,7 @@ function loop2(now){
   if(!I.over)raf2=requestAnimationFrame(loop2);
 }
 function startIce(){
-  audioOn();fit();cancelAnimationFrame(raf);cancelAnimationFrame(raf2);S=null;CUR='ice';
+  audioOn();fit();cancelAnimationFrame(raf);cancelAnimationFrame(raf2);stopRhythm();Rm=null;S=null;CUR='ice';$('#play3').hidden=true;
   I=newIce();I.last=performance.now();
   $('#hub').hidden=true;$('#play').hidden=true;$('#play2').hidden=false;show('');$('#announce2').hidden=true;
   ann2('얼음 사러 출발!');raf2=requestAnimationFrame(loop2);
@@ -782,6 +819,236 @@ function thumbIce(){const c=document.createElement('canvas');c.width=120;c.heigh
   const g=x.createLinearGradient(0,0,0,38);g.addColorStop(0,'#1d1f3a');g.addColorStop(1,'#e8784a');x.fillStyle=g;x.fillRect(0,0,120,38);
   x.fillStyle='#2a2440';x.fillRect(4,12,22,26);x.fillRect(84,6,30,32);x.fillStyle='#8a8478';x.fillRect(0,38,120,10);
   x.drawImage(JR_J,14,8,18,20);x.drawImage(OB.cone.img,52,26,10,12);x.drawImage(ICE,78,18,10,10);x.drawImage(OB.pigeon.imgs[0],96,14,14,10);return c}
+
+/* ================= GAME 3 : 하우스 파티 잠입 ================= */
+const cv3=$('#cv3'),c3=cv3.getContext('2d');
+let Rm=null,raf3=0,schedIv=0;
+const LANE_X=[30,130,230],LANE_W=100,HIT_Y=432,TOP_Y=262;
+const LANE_COL=['#e8501f','#f2a93b','#5fb3e6'],LANE_LBL=['왼쪽','점프','오른쪽'],ARROW=['◀','▲','▶'];
+const A_BASE=["...kffffffffk...","..kffffffffffk..","..kfekffffkefk..","..kffffnnffffk..","..kpfffmmfffpk..","...kffffffffk...","....kkbbbbkk....","...kbbbbbbbbk...","..kfbbbbbbbbfk..","..kfbbbbbbbbfk..","...kbbbbbbbbk...","....kk....kk...."];
+const EARS={cat:["...k........k...","...kk......kk...","...kfk....kfk...","...kffkkkkffk..."],bear:["................","..kkk......kkk..","..kfk......kfk..","..kkkkkkkkkkkk.."],
+ rabbit:["....kk....kk....","....kfk..kfk....","....kfk..kfk....","...kkfkkkkfkk..."],dog:["................","................","..kk........kk..",".kfkkkkkkkkkkfk."]};
+function animal(kind,f,b,n){return spriteCanvas(EARS[kind].concat(A_BASE),{k:'#1a1010',f,b,e:'#1a1010',n:n||'#3a2216',p:'#f09a8a',m:'#3a2216'},16,16)}
+const DANCERS_IMG=[animal('cat','#f2a65a','#2e8b57'),BAM,null,animal('rabbit','#f4f0ea','#b0306a','#f2a0a0'),animal('bear','#8a5a3a','#3a6ea5')];
+const ME=spriteCanvas(["....cccccccc....","...cccccccccc...","...cccccccccccc.","...hssssssssh...","...sggggggggs...","...ssssssssss...","...sssssmmsss...","....ssssssss....","....kkttttkk....","...tttttttttt...","..stttttttttts..","..stttttttttts..","..stttwwttttts..","...tttttttttt...","...kkkkkkkkkk...","...kk......kk..."],
+ {c:'#2a2a3a',h:'#2a1a12',s:'#f2c9a0',g:'#111111',m:'#c0504a',k:'#2a2a3a',t:'#6b3fa0',w:'#f2a93b'},16,16);
+DANCERS_IMG[2]=ME;
+const DANCER_X=[14,82,156,230,298],DANCER_FEET=246;
+
+/* ---- 사운드 (브라우저에서 직접 합성하는 하우스 비트) ---- */
+let OUT=null,NOISE=null;
+function rAudioInit(){
+  audioOn();if(!AC)return false;
+  if(!OUT){const comp=AC.createDynamicsCompressor();comp.threshold.value=-14;comp.ratio.value=4;OUT=AC.createGain();OUT.gain.value=.7;OUT.connect(comp).connect(AC.destination)}
+  if(!NOISE){NOISE=AC.createBuffer(1,AC.sampleRate,AC.sampleRate);const d=NOISE.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1}
+  return true;
+}
+function env(g,t,v,dec){g.gain.setValueAtTime(v,t);g.gain.exponentialRampToValueAtTime(.0001,t+dec)}
+function kick(t){const o=AC.createOscillator(),g=AC.createGain();o.type='sine';o.frequency.setValueAtTime(150,t);o.frequency.exponentialRampToValueAtTime(45,t+.11);env(g,t,1,.32);o.connect(g).connect(OUT);o.start(t);o.stop(t+.35)}
+function noiseHit(t,type,freq,v,dec,q){const s=AC.createBufferSource();s.buffer=NOISE;const f=AC.createBiquadFilter();f.type=type;f.frequency.value=freq;if(q)f.Q.value=q;const g=AC.createGain();env(g,t,v,dec);s.connect(f).connect(g).connect(OUT);s.start(t,Math.random()*.5);s.stop(t+dec+.02)}
+function hat(t,v){noiseHit(t,'highpass',7500,v,.045)}
+function clap(t){noiseHit(t,'bandpass',1700,.45,.14,.9);noiseHit(t+.012,'bandpass',1500,.3,.1,.9)}
+function bass(t,f,d){const o=AC.createOscillator(),lp=AC.createBiquadFilter(),g=AC.createGain();o.type='sawtooth';o.frequency.value=f;lp.type='lowpass';lp.frequency.value=520;env(g,t,.32,d);o.connect(lp).connect(g).connect(OUT);o.start(t);o.stop(t+d+.02)}
+function stab(t,fs){fs.forEach(f=>{const o=AC.createOscillator(),lp=AC.createBiquadFilter(),g=AC.createGain();o.type='square';o.frequency.value=f;lp.type='lowpass';lp.frequency.value=1900;env(g,t,.045,.2);o.connect(lp).connect(g).connect(OUT);o.start(t);o.stop(t+.22)})}
+const ROOTS=[55,43.65,49,41.2],CHORDS=[[220,261.6,329.6,392],[174.6,220,261.6,329.6],[196,246.9,293.7,392],[164.8,196,246.9,293.7]];
+function playBeat(b,t,spb,lv){
+  const bar=Math.floor(b/4)%4,bi=b%4;
+  kick(t);hat(t+spb/2,.22);if(lv>=2)hat(t+spb/4,.08),hat(t+spb*3/4,.08);
+  if(b>=8&&(bi===1||bi===3))clap(t);
+  if(b>=8){bass(t+spb/2,ROOTS[bar],spb*.42);if(lv>=1&&bi===3)bass(t+spb*.75,ROOTS[bar]*2,spb*.2)}
+  if(b>=16&&(bi===1||bi===3))stab(t+spb/2,CHORDS[bar]);
+}
+function scratch(){try{const t=AC.currentTime,o=AC.createOscillator(),g=AC.createGain();o.type='sawtooth';o.frequency.setValueAtTime(700,t);o.frequency.exponentialRampToValueAtTime(60,t+.5);env(g,t,.25,.55);o.connect(g).connect(AC.destination);o.start(t);o.stop(t+.6)}catch(e){}}
+
+/* ---- 상태 ---- */
+function newRhythm(){const t0=AC.currentTime+.35;return {t0,nextT:t0,beat:0,bpm:118,level:0,notes:[],beats:[],score:0,combo:0,maxCombo:0,perfect:0,good:0,miss:0,sus:0,
+  over:false,paused:false,judge:null,pMove:null,stare:-9,last:0,anns:[],song:1,lanePrev:[],queue:[]}}
+const lat=()=>AC?((AC.outputLatency||0)+(AC.baseLatency||0)):0;
+const rNow=()=>AC.currentTime-lat();
+function pickLane(R){let l=Math.floor(Math.random()*3);const p=R.lanePrev;if(p.length>=2&&p[p.length-1]===l&&p[p.length-2]===l)l=(l+1+Math.floor(Math.random()*2))%3;p.push(l);if(p.length>4)p.shift();return l}
+function genNotes(R,b,t,spb){
+  if(b<8)return;
+  const lv=R.level;
+  const onBeat=lv>=1||b%2===0;
+  if(onBeat){const l=pickLane(R);R.notes.push({t,lane:l});
+    if(lv>=3&&Math.random()<.12){let l2=(l+1+Math.floor(Math.random()*2))%3;R.notes.push({t,lane:l2})}}
+  const off=[0,0,.28,.42,.55,.65][Math.min(lv,5)];
+  if(Math.random()<off)R.notes.push({t:t+spb/2,lane:pickLane(R)});
+}
+function rSchedule(){
+  const R=Rm;if(!R||R.over||R.paused)return;
+  // 노트·박자 계획은 2초 앞까지 미리 (노트가 위에서부터 떨어지도록)
+  while(R.nextT<AC.currentTime+2.2){
+    const spb=60/R.bpm;
+    R.queue.push({b:R.beat,t:R.nextT,spb,lv:R.level});genNotes(R,R.beat,R.nextT,spb);
+    if(R.beat>=4&&R.beat<8)R.anns.push({t:R.nextT,txt:['3','2','1','GO!'][R.beat-4]});
+    R.beat++;R.nextT+=spb;
+    if(R.beat>=40&&(R.beat-8)%32===0){R.level++;R.song++;R.bpm=Math.min(142,R.bpm+4);
+      R.anns.push({t:R.nextT,txt:`${R.song}곡째! BPM ${R.bpm}`})}
+  }
+  // 소리는 0.15초 앞만 예약
+  while(R.queue.length&&R.queue[0].t<AC.currentTime+.15){
+    const q=R.queue.shift();playBeat(q.b,q.t,q.spb,q.lv);R.beats.push({t:q.t,spb:q.spb});if(R.beats.length>8)R.beats.shift();
+  }
+}
+function scrollT(R){return Math.max(1,1.6-R.level*.1)}
+
+/* ---- 입력 ---- */
+function rTap(lane){
+  const R=Rm;if(!R||R.over||R.paused)return;
+  const now=rNow();R.pMove={lane,t:now};
+  let best=null,bd=1;
+  for(const n of R.notes){if(n.done||n.lane!==lane)continue;const d=Math.abs(n.t-now);if(d<bd){bd=d;best=n}}
+  if(best&&bd<=.15){
+    best.done=true;
+    if(bd<=.055){R.perfect++;R.combo++;R.score+=100+Math.floor(R.combo/10)*10;R.sus=Math.max(0,R.sus-4);R.judge={txt:'PERFECT',col:'#f2a93b',t:now,lane}}
+    else{R.good++;R.combo++;R.score+=50;R.sus=Math.max(0,R.sus-1.5);R.judge={txt:'GOOD',col:'#5fb3e6',t:now,lane}}
+    R.maxCombo=Math.max(R.maxCombo,R.combo);
+  }else{R.sus+=4;R.judge={txt:'엇박!',col:'#ff7a62',t:now,lane};R.stare=now}
+  if(R.sus>=100)rOver();
+}
+cv3.addEventListener('pointerdown',e=>{
+  if(!Rm)return;const r=cv3.getBoundingClientRect();const x=(e.clientX-r.left)/r.width*W,y=(e.clientY-r.top)/r.height*H;
+  if(y<TOP_Y-40)return;rTap(clamp(Math.floor((x-LANE_X[0])/LANE_W),0,2));e.preventDefault();
+});
+document.addEventListener('keydown',e=>{
+  if($('#play3').hidden||!Rm||Rm.over||e.repeat)return;
+  const k=e.key.toLowerCase();
+  if(k==='p'||k==='escape'){togglePause();e.preventDefault();return}
+  const m={arrowleft:0,a:0,j:0,arrowup:1,s:1,' ':1,k:1,arrowdown:1,arrowright:2,d:2,l:2};
+  if(k in m){rTap(m[k]);e.preventDefault()}
+});
+
+/* ---- 업데이트 & 그리기 ---- */
+function rUpdate(){
+  const R=Rm,now=rNow();
+  for(const n of R.notes){if(!n.done&&now-n.t>.15){n.done=true;n.missed=true;R.miss++;R.combo=0;R.sus+=13;R.stare=now;R.judge={txt:'MISS',col:'#d23b26',t:now,lane:n.lane}}}
+  R.notes=R.notes.filter(n=>!(n.done&&now-n.t>.5));
+  if(R.anns.length&&R.anns[0].t<=now){const a=R.anns.shift();ann3(a.txt)}
+  if(R.sus>=100){R.sus=100;rOver();return}
+  $('#rScore').textContent=R.score.toLocaleString('ko-KR');$('#rCombo').textContent=R.combo;
+  const s=$('#rSus');s.style.width=Math.min(100,R.sus)+'%';s.classList.toggle('hi',R.sus>=65);
+}
+function ann3(txt){const a=$('#announce3');a.textContent=txt;a.hidden=false;clearTimeout(ann3.to);ann3.to=setTimeout(()=>a.hidden=true,txt.length<=3?420:1300);if(txt.includes('곡째'))beep(988,.06,'triangle',.03)}
+function beatPhase(R,now){let last=null;for(const b of R.beats)if(b.t<=now)last=b;if(last==null)return 1;return clamp((now-last.t)/last.spb,0,1)}
+function moveFor(lane,since){const k=clamp(1-since/.22,0,1);if(k<=0)return [0,0];const e=Math.sin(k*Math.PI/2);return lane===0?[-7*e,-2*e]:lane===2?[7*e,-2*e]:[0,-14*e]}
+function rDraw(){
+  const R=Rm,x=c3,now=rNow(),ph=beatPhase(R,now),pulse=1-ph;
+  x.imageSmoothingEnabled=false;
+  // ── 가게 안 (스케치 구도: 왼쪽 위 DJ 부스, 오른쪽 하이 테이블, 사람들은 주변에) ──
+  // 나무 벽
+  for(let xx=0;xx<W;xx+=18){x.fillStyle=(xx/18)%2?'#3a2216':'#33200f';x.fillRect(xx,0,18,150)}
+  x.fillStyle='#22120a';x.fillRect(0,146,W,4);
+  // 따뜻한 펜던트 조명
+  [[60,0],[300,0]].forEach(([lx])=>{x.fillStyle='#22120a';x.fillRect(lx-1,0,2,18);x.fillStyle='#f2a93b';x.fillRect(lx-8,18,16,7);
+    const gl=x.createRadialGradient(lx,26,2,lx,26,90);gl.addColorStop(0,`rgba(242,169,59,${.35+.15*pulse})`);gl.addColorStop(1,'rgba(242,169,59,0)');x.fillStyle=gl;x.fillRect(lx-90,0,180,140)});
+  // 파티 조명 (은은하게)
+  x.globalAlpha=.07+.06*pulse;
+  for(let i=0;i<3;i++){const a=now*.5+i*2.1;x.fillStyle=['#e8501f','#f2a93b','#fff3c4'][i];x.beginPath();x.moveTo(180,0);x.lineTo(180+Math.cos(a)*220-30,250);x.lineTo(180+Math.cos(a)*220+30,250);x.fill()}
+  x.globalAlpha=1;
+  // 네온 간판 (오른쪽 위)
+  x.fillStyle='#22120a';x.fillRect(282,40,72,34);
+  x.font='22px "Do Hyeon", sans-serif';x.textAlign='center';x.textBaseline='middle';
+  x.fillStyle=`rgba(232,80,31,${.6+.4*pulse})`;x.fillText('ijARi',318,57);
+  x.font='10px "Silkscreen", monospace';x.fillStyle='#f2a93b';x.fillText('PRIVATE',318,86);x.fillText('PARTY',318,97);
+  // 나무 바닥
+  for(let yy=150;yy<TOP_Y;yy+=12){x.fillStyle=((yy-150)/12)%2?'#6a3a1e':'#5e3019';x.fillRect(0,yy,W,12);
+    x.fillStyle='#4a2614';for(let xx=((yy/12)%2)*40;xx<W;xx+=80)x.fillRect(xx,yy,2,12)}
+  x.fillStyle=`rgba(242,169,59,${.06*pulse})`;x.fillRect(0,150,W,TOP_Y-150);
+  // DJ 죠니 (부스 뒤)
+  const jb=Math.round(pulse*3);
+  x.drawImage(JOHNNY,96,64-jb,48,48);
+  x.fillStyle='#1a1010';x.fillRect(98,72-jb,6,12);x.fillRect(136,72-jb,6,12);x.fillRect(100,64-jb,40,3);
+  x.font='12px "Do Hyeon", sans-serif';x.fillStyle='#fff3c4';x.textAlign='right';x.fillText('DJ 죠니 →',92,74);
+  // 마이크 스탠드
+  x.fillStyle='#8a8a8a';x.fillRect(158,54,3,66);x.fillRect(158,54,14,3);x.fillStyle='#2a2a2a';x.fillRect(170,50,8,8);
+  // 노트북 (부스 오른쪽, 크게 열린 화면)
+  x.fillStyle='#1a1010';x.beginPath();x.moveTo(194,120);x.lineTo(222,34);x.lineTo(272,38);x.lineTo(250,120);x.closePath();x.fill();
+  x.fillStyle='#b9bec6';x.beginPath();x.moveTo(197,118);x.lineTo(224,38);x.lineTo(268,41);x.lineTo(247,118);x.closePath();x.fill();
+  x.fillStyle=`rgba(232,80,31,${.75+.25*pulse})`;x.beginPath();x.arc(236,80,10,0,Math.PI*2);x.fill();
+  x.fillStyle='#fff9ec';x.font='8px "Do Hyeon", sans-serif';x.textAlign='center';x.fillText('ijARi',236,81);
+  // DJ 부스 (앞판에 턴테이블 두 개)
+  x.fillStyle='#22120a';x.fillRect(60,116,196,6);
+  x.fillStyle='#9b5527';x.fillRect(64,122,186,32);x.fillStyle='#7a3f1e';x.fillRect(64,150,186,4);
+  [106,170].forEach((cx,i)=>{x.fillStyle='#1a1010';x.beginPath();x.ellipse(cx,137,22,12,0,0,Math.PI*2);x.fill();
+    x.fillStyle='#e8501f';x.beginPath();x.ellipse(cx,137,6,4,0,0,Math.PI*2);x.fill();
+    const a=now*(i?6:-6);x.strokeStyle='#666';x.lineWidth=1.5;x.beginPath();x.moveTo(cx,137);x.lineTo(cx+Math.cos(a)*18,137+Math.sin(a)*10);x.stroke()});
+  for(let i=0;i<6;i++){x.fillStyle=(i<Math.round(pulse*6))?['#2fbf71','#2fbf71','#f2a93b','#f2a93b','#d23b26','#d23b26'][i]:'#3a2216';x.fillRect(204+i*7,132,5,10)}
+  x.fillStyle='#22120a';x.fillRect(246,154,4,44);
+  // 오른쪽 하이 테이블 + 술병
+  const lastNote=R.notes.filter(n=>n.t<=now&&now-n.t<.25).sort((a,b)=>b.t-a.t)[0];
+  const staring=now-R.stare<.9;
+  const PEOPLE=[{i:0,x:8,f:206},{i:3,x:276,f:200,glass:true},{i:1,x:30,f:258},{i:2,x:126,f:258,me:true},{i:4,x:310,f:258,sit:true}];
+  const drawP=p=>{
+    let mx=0,my=-Math.round(pulse*3);
+    if(p.me){if(R.pMove){const m=moveFor(R.pMove.lane,now-R.pMove.t);mx+=m[0];my+=m[1]}}
+    else if(lastNote&&!p.sit){const m=moveFor(lastNote.lane,now-lastNote.t);mx+=m[0];my+=m[1]}
+    if(p.sit)my=-Math.round(pulse*2);
+    x.drawImage(DANCERS_IMG[p.i],p.x+mx,p.f-44+my,44,44);
+    if(p.glass){const gx=p.x+mx+38,gy=p.f-40+my;x.fillStyle='#bfe8ff';x.beginPath();x.moveTo(gx-6,gy);x.lineTo(gx+6,gy);x.lineTo(gx,gy+7);x.fill();x.fillStyle='#e8501f';x.fillRect(gx-3,gy+1,6,2);x.fillStyle='#bfe8ff';x.fillRect(gx-1,gy+7,2,7);x.fillRect(gx-3,gy+13,6,2)}
+    if(!p.me&&staring){x.fillStyle='#fff3c4';x.font='18px "Do Hyeon", sans-serif';x.textAlign='center';x.fillText(p.i%2?'!?':'?',p.x+22+mx,p.f-50+my)}
+    if(p.me){x.fillStyle='#f2a93b';x.font='12px "Do Hyeon", sans-serif';x.textAlign='center';x.fillText('▼ 나',p.x+22,p.f-54)}
+  };
+  drawP(PEOPLE[0]);drawP(PEOPLE[1]);
+  // 테이블 (토끼 다리를 가림)
+  x.fillStyle='#22120a';x.beginPath();x.moveTo(250,192);x.lineTo(336,184);x.lineTo(348,214);x.lineTo(262,222);x.closePath();x.fill();
+  x.fillStyle='#c0743c';x.beginPath();x.moveTo(252,194);x.lineTo(334,186);x.lineTo(345,212);x.lineTo(263,220);x.closePath();x.fill();
+  x.fillStyle='#22120a';x.fillRect(290,218,4,40);
+  x.fillStyle='#3d6a3a';x.fillRect(296,184,8,18);x.fillRect(298,178,4,6);x.fillStyle='#efd27a';x.fillRect(296,190,8,6);
+  // 의자
+  x.fillStyle='#22120a';x.fillRect(312,244,34,4);x.fillRect(314,248,3,12);x.fillRect(341,248,3,12);
+  drawP(PEOPLE[2]);drawP(PEOPLE[4]);drawP(PEOPLE[3]);
+  // 노트 길
+  x.fillStyle='#160d07';x.fillRect(0,TOP_Y,W,H-TOP_Y);
+  for(let l=0;l<3;l++){x.fillStyle=l%2?'#1e120a':'#26170c';x.fillRect(LANE_X[l],TOP_Y,LANE_W,H-TOP_Y)}
+  x.fillStyle='#3a2216';for(let l=0;l<=3;l++)x.fillRect(LANE_X[0]+l*LANE_W-1,TOP_Y,2,H-TOP_Y);
+  // 판정선 & 버튼
+  x.fillStyle=`rgba(255,249,236,${.5+.4*pulse})`;x.fillRect(LANE_X[0],HIT_Y-2,LANE_W*3,4);
+  for(let l=0;l<3;l++){const pressed=R.pMove&&R.pMove.lane===l&&now-R.pMove.t<.12;
+    x.fillStyle=pressed?LANE_COL[l]:'#3a2216';x.fillRect(LANE_X[l]+6,HIT_Y+10,LANE_W-12,34);
+    x.fillStyle=pressed?'#22120a':LANE_COL[l];x.font='15px "Do Hyeon", sans-serif';x.textAlign='center';x.textBaseline='middle';x.fillText(ARROW[l]+' '+LANE_LBL[l],LANE_X[l]+LANE_W/2,HIT_Y+28)}
+  // 노트
+  const st=scrollT(R);
+  for(const n of R.notes){if(n.done&&!n.missed)continue;
+    const y=HIT_Y-(n.t-now)/st*(HIT_Y-TOP_Y);if(y<TOP_Y-14||y>H)continue;
+    const nx=LANE_X[n.lane]+10,w=LANE_W-20;
+    x.globalAlpha=n.missed?.3:1;
+    x.fillStyle='#1a1010';x.fillRect(nx+2,y-9,w,20);x.fillStyle=LANE_COL[n.lane];x.fillRect(nx,y-11,w,20);
+    x.fillStyle='rgba(255,255,255,.35)';x.fillRect(nx,y-11,w,4);
+    x.fillStyle='#22120a';x.font='14px "Do Hyeon", sans-serif';x.textAlign='center';x.textBaseline='middle';x.fillText(ARROW[n.lane],nx+w/2,y);
+    x.globalAlpha=1}
+  // 판정 글자
+  if(R.judge&&now-R.judge.t<.5){const k=(now-R.judge.t)/.5;x.globalAlpha=1-k;x.font='22px "Silkscreen", monospace';x.textAlign='center';x.fillStyle='#1a1010';
+    const jx=LANE_X[R.judge.lane]+LANE_W/2;x.fillText(R.judge.txt,jx+2,HIT_Y-40-k*16+2);x.fillStyle=R.judge.col;x.fillText(R.judge.txt,jx,HIT_Y-40-k*16);x.globalAlpha=1}
+  if(R.combo>=5){x.fillStyle='rgba(255,249,236,.85)';x.font='14px "Silkscreen", monospace';x.textAlign='center';x.fillText(R.combo+' COMBO',W/2,TOP_Y+18)}
+  if(R.sus>=65){x.fillStyle=`rgba(210,59,38,${.12+.1*pulse})`;x.fillRect(0,0,W,H)}
+}
+function loop3(){if(!Rm)return;if(!Rm.paused&&!Rm.over)rUpdate();if(Rm)rDraw();if(Rm&&!Rm.over)raf3=requestAnimationFrame(loop3)}
+function stopRhythm(){clearInterval(schedIv);cancelAnimationFrame(raf3);if(OUT&&AC){try{OUT.gain.cancelScheduledValues(AC.currentTime);OUT.gain.setValueAtTime(0,AC.currentTime)}catch(e){}}}
+function startRhythm(){
+  if(!rAudioInit()){alertNoAudio();return}
+  stopRhythm();cancelAnimationFrame(raf);cancelAnimationFrame(raf2);S=null;I=null;CUR='rhythm';
+  if(AC.state==='suspended')AC.resume();
+  OUT.gain.cancelScheduledValues(AC.currentTime);OUT.gain.setValueAtTime(.7,AC.currentTime);
+  Rm=newRhythm();
+  $('#hub').hidden=true;$('#play').hidden=true;$('#play2').hidden=true;$('#play3').hidden=false;show('');$('#announce3').hidden=true;fit();
+  ann3('파티에 섞여 들어가자…');
+  schedIv=setInterval(rSchedule,25);rSchedule();raf3=requestAnimationFrame(loop3);
+}
+function alertNoAudio(){$('#how3Msg').textContent='이 브라우저에서 소리를 켤 수 없어요. 다른 브라우저로 해 주세요.'}
+function rOver(){
+  const R=Rm;if(R.over)return;R.over=true;clearInterval(schedIv);
+  try{OUT.gain.setTargetAtTime(0,AC.currentTime,.05)}catch(e){}scratch();
+  R.stare=rNow()+99;rDraw();
+  const secs=Math.max(0,AC.currentTime-R.t0);
+  showOver('rhythm',{cause:'BUSTED · '+mmss(secs),title:'정체가 들통났다!',score:R.score,time:secs,
+    stats:[['버틴 곡',R.song+'곡'],['PERFECT',R.perfect+'번'],['최대 콤보',R.maxCombo]]});
+  $('#ovTitle').textContent='정체가 들통났다! 밤쥐: "너… 누구야?"';
+}
+function thumbRhythm(){const c=document.createElement('canvas');c.width=120;c.height=48;const x=c.getContext('2d');x.imageSmoothingEnabled=false;
+  x.fillStyle='#1a1030';x.fillRect(0,0,120,48);x.fillStyle='rgba(242,169,59,.25)';x.beginPath();x.moveTo(60,0);x.lineTo(20,48);x.lineTo(50,48);x.fill();
+  x.drawImage(JOHNNY,50,2,20,20);x.fillStyle='#e8501f';x.fillRect(44,18,32,8);
+  x.drawImage(DANCERS_IMG[0],8,28,18,18);x.drawImage(BAM,30,28,18,18);x.drawImage(ME,52,28,18,18);x.drawImage(DANCERS_IMG[3],74,28,18,18);x.drawImage(DANCERS_IMG[4],96,28,18,18);return c}
 
 fit();renderHub();
 })();
