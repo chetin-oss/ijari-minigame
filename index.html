@@ -149,13 +149,13 @@ canvas{image-rendering:pixelated;image-rendering:crisp-edges}
 <section id="play" hidden>
   <div id="phud">
     <span class="chip"><span class="logo" role="img" aria-label="ijARi"></span></span>
-    <span class="gname">이자리 주문 러쉬</span>
+    <span class="gname">오늘따라 손님이 많네, 감사합니다</span>
     <span class="st"><span>점수</span><b id="pScore">0</b></span>
     <span class="st"><span>시간</span><b id="pTime">0:00</b></span>
     <span id="lives" aria-label="남은 기회">♥♥♥</span>
     <button id="pauseBtn" type="button">II</button>
   </div>
-  <div id="cvWrap"><canvas id="cv" width="360" height="480" aria-label="이자리 주문 러쉬 게임 화면"></canvas><div id="announce" hidden></div></div>
+  <div id="cvWrap"><canvas id="cv" width="360" height="480" aria-label="오늘따라 손님이 많네, 감사합니다 게임 화면"></canvas><div id="announce" hidden></div></div>
   <button id="bamBtn" type="button" disabled><span id="bamLbl">밤쥐 게이지 0/12</span></button>
   <div id="keys">키보드: ↑↓ 줄 이동 · Z 맥주 · X 와인 · B 밤쥐 호출 · P 일시정지 (오른쪽 버튼을 눌러도 돼요)</div>
 </section>
@@ -217,7 +217,7 @@ canvas{image-rendering:pixelated;image-rendering:crisp-edges}
 <!-- 게임 설명 -->
 <div class="overlay" id="ovHow" hidden>
   <div class="card">
-    <h2><small>GAME 1</small>이자리 주문 러쉬</h2>
+    <h2><small>GAME 1</small>오늘따라 손님이 많네, 감사합니다</h2>
     <div class="howto">
       <div><b>서빙</b><span>각 바 오른쪽 버튼을 누르면 그 줄로 술이 쭉 미끄러져 가요.</span></div>
       <div><b>주문</b><span>손님 머리 위 말풍선에 맞는 술을 보내요. 처음엔 병맥주만, 나중엔 와인도!</span></div>
@@ -247,7 +247,7 @@ canvas{image-rendering:pixelated;image-rendering:crisp-edges}
 <!-- 순위표 -->
 <div class="overlay" id="ovRankView" hidden>
   <div class="card">
-    <h2><small>RANKING</small><span id="rvTitle">이자리 주문 러쉬</span></h2>
+    <h2><small>RANKING</small><span id="rvTitle">오늘따라 손님이 많네, 감사합니다</span></h2>
     <p class="note" id="rvNote"></p>
     <ol class="rank" id="rvList"></ol>
     <div class="row-btns"><button class="btn" id="btnRvBack" type="button">돌아가기</button></div>
@@ -278,7 +278,7 @@ function beep(f,d,type='square',v=.05){try{if(!AC)return;const o=AC.createOscill
 
 /* ---------- 순위표 (이 기기) ---------- */
 const GAMES=[
- {id:'slide',how:'#ovHow',unit:'',no:'GAME 1',name:'이자리 주문 러쉬',desc:'사장 죠니가 밀려드는 손님에게 술을 쭉 밀어 서빙! 처음엔 병맥주만, 점점 손님이 늘고 와인까지. 주문보다 술이 많이 나가면 끝.',ready:true},
+ {id:'slide',how:'#ovHow',unit:'',no:'GAME 1',name:'오늘따라 손님이 많네, 감사합니다',desc:'사장 죠니가 밀려드는 손님에게 술을 쭉 밀어 서빙! 처음엔 병맥주만, 점점 손님이 늘고 와인까지. 주문보다 술이 많이 나가면 끝.',ready:true},
  {id:'ice',how:'#ovHow2',unit:'m',no:'GAME 2',name:'얼음 금방 사올게, 나는 러너니까.',desc:'얼음이 다 떨어졌다! 사장 죠니가 군자 골목을 달려요. 장애물은 점프로 피하고, 녹는 얼음은 얼음을 주워 채우세요.',ready:true},
  {id:'rhythm',how:'#ovHow3',unit:'',no:'GAME 3',name:'음악모임은 처음입니다만',desc:'영업 안 하는 날, 이자리는 대관 음악모임 중! DJ 죠니의 비트에 맞춰 동물들과 똑같이 흔들어야 정체가 안 들켜요.',ready:true},
 ];
@@ -386,7 +386,7 @@ function renderHub(){
 const OVS=['#ovHow','#ovHow2','#ovHow3','#ovOver','#ovRankView','#ovPause'];
 function show(id){OVS.forEach(s=>$(s).hidden=s!==id)}
 
-/* ================= GAME 1 : 이자리 주문 러쉬 ================= */
+/* ================= GAME 1 : 오늘따라 손님이 많네, 감사합니다 ================= */
 const W=360,H=480,LANES=4,LTOP=60,LH=104,DOOR=26,BAR_END=246,BTN_X=304,BTN_W=52,DRINK_V=250;
 const laneTop=i=>LTOP+i*LH, counterY=i=>laneTop(i)+74;
 const cv=$('#cv'),ctx=cv.getContext('2d');
