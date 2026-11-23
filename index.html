@@ -205,7 +205,6 @@ canvas{image-rendering:pixelated;image-rendering:crisp-edges}
     <p>이자리에 갔는데, 오늘은 영업을 안 하는 날이네요..? 대신 분위기 좋은 음악 모임이 열리고 있어요. 함께 비트를 맞추며, 음악모임 회원인 척 해요. 박자를 못 맞추면 걸려요!</p>
     <div class="howto">
       <div><b>박자</b><span>떨어지는 노트가 하얀 선에 닿는 순간, 그 줄(왼쪽·점프·오른쪽)을 눌러 같이 흔들어요.</span></div>
-      <div><b>길게</b><span>꼬리가 달린 노트는 칸에 닿을 때 눌러서, 꼬리가 끝날 때까지 꾹 누르고 있어요. 중간에 떼면 끊겨요!</span></div>
       <div><b>판정</b><span>딱 맞으면 PERFECT, 조금 어긋나면 GOOD. 놓치거나 엇박에 누르면 동물들이 쳐다봐요.</span></div>
       <div><b>수상함</b><span>실수할수록 수상함 게이지가 차요. 100이 되면 정체가 들통나서 끝! 잘 맞히면 다시 내려가요.</span></div>
       <div><b>음악</b><span>곡이 바뀔 때마다 BPM이 빨라져요. 꼭 소리를 켜고 하세요!</span></div>
@@ -931,7 +930,7 @@ function genNotes(R,b,t,spb){
   R.busy=R.busy||[0,0,0];
   if(onBeat){const l=pickLane(R,t);
     if(l>=0){
-      const holdP=b<14?0:[.18,.2,.22,.25,.27,.3][Math.min(lv,5)];
+      const holdP=0; // 홀드 노트 끔
       const anyHold=R.busy.some(v=>v>t);
       if(!anyHold&&Math.random()<holdP){const beats=lv>=3&&Math.random()<.4?3:2;const dur=spb*beats;
         R.notes.push({t,lane:l,dur,hold:'wait'});R.busy[l]=t+dur+spb*.45;
