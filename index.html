@@ -325,7 +325,17 @@ const store={get(k){try{return localStorage.getItem(k)}catch(e){return null}},se
 
 /* ---------- 사운드 ---------- */
 let AC=null;
-function audioOn(){try{AC=AC||new (window.AudioContext||window.webkitAudioContext)();AC.resume&&AC.resume()}catch(e){AC=null}}
+/* 아이폰 무음 스위치가 켜져 있어도 소리가 나도록: 무음 오디오 태그를 같이 재생해 '미디어 재생'으로 전환 */
+let SILENT_EL=null;
+function silentWav(){const n=800,b=new Uint8Array(44+n),v=new DataView(b.buffer);const w=(o,s)=>{for(let i=0;i<s.length;i++)b[o+i]=s.charCodeAt(i)};
+  w(0,'RIFF');v.setUint32(4,36+n,true);w(8,'WAVE');w(12,'fmt ');v.setUint32(16,16,true);v.setUint16(20,1,true);v.setUint16(22,1,true);v.setUint32(24,8000,true);v.setUint32(28,8000,true);v.setUint16(32,1,true);v.setUint16(34,8,true);w(36,'data');v.setUint32(40,n,true);b.fill(128,44);
+  let s='';b.forEach(c=>s+=String.fromCharCode(c));return 'data:audio/wav;base64,'+btoa(s)}
+function unlockMedia(){
+  try{if(navigator.audioSession&&navigator.audioSession.type!=='playback')navigator.audioSession.type='playback'}catch(e){}
+  try{if(!SILENT_EL){SILENT_EL=document.createElement('audio');SILENT_EL.setAttribute('playsinline','');SILENT_EL.setAttribute('x-webkit-airplay','deny');SILENT_EL.preload='auto';SILENT_EL.loop=true;SILENT_EL.src=silentWav()}
+    if(SILENT_EL.paused){const pr=SILENT_EL.play();if(pr&&pr.catch)pr.catch(()=>{})}}catch(e){}
+}
+function audioOn(){unlockMedia();try{AC=AC||new (window.AudioContext||window.webkitAudioContext)();AC.resume&&AC.resume()}catch(e){AC=null}}
 function beep(f,d,type='square',v=.05){try{if(!AC)return;const o=AC.createOscillator(),g=AC.createGain();o.type=type;o.frequency.value=f;g.gain.setValueAtTime(v,AC.currentTime);g.gain.exponentialRampToValueAtTime(.0001,AC.currentTime+d);o.connect(g).connect(AC.destination);o.start();o.stop(AC.currentTime+d)}catch(e){}}
 
 /* ---------- 순위표 (이 기기) ---------- */
@@ -1073,7 +1083,7 @@ function releasePointer(pid){const R=Rm;if(!R||!R.holding)return;for(let l=0;l<3
 cv3.addEventListener('pointerup',e=>releasePointer(e.pointerId));
 cv3.addEventListener('pointercancel',e=>releasePointer(e.pointerId));
 cv3.addEventListener('pointerdown',e=>{
-  if(!Rm)return;try{cv3.setPointerCapture(e.pointerId)}catch(_){}if(AC&&AC.state!=='running'&&!Rm.paused){try{AC.resume()}catch(e){}}const r=cv3.getBoundingClientRect();const x=(e.clientX-r.left)/r.width*W,y=(e.clientY-r.top)/r.height*H;
+  if(!Rm)return;try{cv3.setPointerCapture(e.pointerId)}catch(_){}if(!Rm.paused&&(!AC||AC.state!=='running'||(SILENT_EL&&SILENT_EL.paused)))audioOn();const r=cv3.getBoundingClientRect();const x=(e.clientX-r.left)/r.width*W,y=(e.clientY-r.top)/r.height*H;
   if(y<TOP_Y-40)return;rTap(clamp(Math.floor((x-LANE_X[0])/LANE_W),0,2),e.pointerId);e.preventDefault();
 });
 document.addEventListener('keydown',e=>{
