@@ -1258,7 +1258,10 @@ function thumbRhythm(){const c=document.createElement('canvas');c.width=120;c.he
 
 /* ================= 메인 로비: 이자리 가게 안 (그림 배경 + 죠니) ================= */
 const LOB_W=1402,LOB_H=1122,lcv=$('#lobby'),lx=lcv.getContext('2d');
-const LOB_BG=new Image();let lobReady=false;LOB_BG.onload=()=>{lobReady=true};LOB_BG.src='ijari-lobby.webp';
+/* GitHub Pages(…github.io)에서는 메인 그림 화면을 숨기고 게임 목록만 보여줌 */
+const SHOW_LOBBY=!/github\.io$/i.test(location.hostname);
+if(!SHOW_LOBBY){const sec=document.querySelector('.lobby');if(sec)sec.hidden=true}
+const LOB_BG=new Image();let lobReady=false;LOB_BG.onload=()=>{lobReady=true};if(SHOW_LOBBY)LOB_BG.src='ijari-lobby.webp';
 let lobbyRaf=0,lobbyHover=null,bamSayT=-9,johnnySayT=-9;
 const HOT=[
  {id:'slide',x:230,y:370,w:660,h:330,tag:'1',label:'오늘따라 손님이 많네',tx:400,ty:556},
@@ -1316,7 +1319,7 @@ function lobbyLoop(now){
   if($('#hub').hidden){lobbyRaf=0;return}
   drawLobby(now/1000);lobbyRaf=requestAnimationFrame(lobbyLoop);
 }
-function startLobby(){if(!lobbyRaf)lobbyRaf=requestAnimationFrame(lobbyLoop)}
+function startLobby(){if(SHOW_LOBBY&&!lobbyRaf)lobbyRaf=requestAnimationFrame(lobbyLoop)}
 function hotAt(e){const r=lcv.getBoundingClientRect();const px=(e.clientX-r.left)/r.width*LOB_W,py=(e.clientY-r.top)/r.height*LOB_H;
   const inR=(a,b,c,d)=>px>=a&&px<=a+c&&py>=b&&py<=b+d;
   for(const h of [...HOT].reverse()){if(h.tag&&inR(h.tx-130,h.ty-50,260,60))return h}
