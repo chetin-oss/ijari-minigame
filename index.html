@@ -377,7 +377,7 @@ function renderHub(){
       const top=getRank(g.id)[0];const b=document.createElement('div');b.className='best';const setBest=(t,label)=>{b.textContent=t?`${label} 1위 · ${t.name} ${fmtScore(g.id,t.score)}${g.unit?'':'점'}`:'아직 기록 없음'};setBest(top,'이 기기');c.appendChild(b);
       fetchGlobal(g.id).then(l=>setBest(l[0],'전체')).catch(()=>{});
       const row=document.createElement('div');row.className='row';
-      const pl=document.createElement('button');pl.className='btn hot';pl.type='button';pl.textContent='플레이';pl.onclick=()=>{audioOn();if(g.id==='rhythm')loadMusic();show(g.how)};
+      const pl=document.createElement('button');pl.className='btn hot';pl.type='button';pl.textContent='플레이';pl.onclick=()=>{audioOn();if(g.id==='rhythm'&&USE_MUSIC_FILE)loadMusic();show(g.how)};
       const rk=document.createElement('button');rk.className='btn';rk.type='button';rk.textContent='순위';rk.onclick=()=>{$('#rvTitle').textContent=g.name;show('#ovRankView');showRankInto($('#rvList'),$('#rvNote'),g.id,null)};
       row.append(pl,rk);c.appendChild(row);
     }
@@ -921,6 +921,7 @@ function scratch(){try{const t=AC.currentTime,o=AC.createOscillator(),g=AC.creat
 /* ---- 상태 ---- */
 let pauseAcc=0,pauseAt=0;
 /* 음악: 128.12 BPM, 첫 박 0.24초, 1~8마디 인트로 → 끝나면 9~79마디를 끊김 없이 반복 */
+const USE_MUSIC_FILE=false; // true로 바꾸면 ijari-party.mp3 사용
 const MUSIC={url:'ijari-party.mp3',bpm:128.12,offset:.24,loopFromBeat:32,loopToBeat:316};
 let MUSIC_BUF=null,musicLoading=null,musicSrc=null;
 function loadMusic(){
@@ -1206,7 +1207,7 @@ function startRhythm(){
   };
   Rm=null;
   const c=c3;c.fillStyle='#22120a';c.fillRect(0,0,W,H);c.fillStyle='#fff9ec';c.font='20px "Do Hyeon", sans-serif';c.textAlign='center';c.textBaseline='middle';c.fillText('음악 불러오는 중…',W/2,H/2);
-  Promise.race([loadMusic(),new Promise(r=>setTimeout(()=>r(null),7000))]).then(go);
+  Promise.resolve(USE_MUSIC_FILE?Promise.race([loadMusic(),new Promise(r=>setTimeout(()=>r(null),7000))]):null).then(go);
   setTimeout(()=>{if(Rm&&!Rm.over&&!audioOK())ann3('소리가 안 나면 화면을 한 번 눌러 주세요')},1200);
 }
 function alertNoAudio(){$('#how3Msg').textContent='이 브라우저에서 소리를 켤 수 없어요. 다른 브라우저로 해 주세요.'}
