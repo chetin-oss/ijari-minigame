@@ -205,6 +205,7 @@ canvas{image-rendering:pixelated;image-rendering:crisp-edges}
     <p>이자리에 갔는데, 오늘은 영업을 안 하는 날이네요..? 대신 분위기 좋은 음악 모임이 열리고 있어요. 함께 비트를 맞추며, 음악모임 회원인 척 해요. 박자를 못 맞추면 걸려요!</p>
     <div class="howto">
       <div><b>박자</b><span>떨어지는 노트가 하얀 선에 닿는 순간, 그 줄(왼쪽·점프·오른쪽)을 눌러 같이 흔들어요.</span></div>
+      <div><b>길게</b><span>꼬리가 달린 노트는 칸에 닿을 때 눌러서, 꼬리가 끝날 때까지 꾹 누르고 있어요. 중간에 떼면 끊겨요!</span></div>
       <div><b>판정</b><span>딱 맞으면 PERFECT, 조금 어긋나면 GOOD. 놓치거나 엇박에 누르면 동물들이 쳐다봐요.</span></div>
       <div><b>수상함</b><span>실수할수록 수상함 게이지가 차요. 100이 되면 정체가 들통나서 끝! 잘 맞히면 다시 내려가요.</span></div>
       <div><b>음악</b><span>곡이 바뀔 때마다 BPM이 빨라져요. 꼭 소리를 켜고 하세요!</span></div>
@@ -643,7 +644,8 @@ function startGame(){
 }
 function curS(){return CUR==='ice'?I:CUR==='rhythm'?Rm:S}
 function togglePause(){const st=curS();if(!st||st.over)return;st.paused=!st.paused;show(st.paused?'#ovPause':'');if(!st.paused)st.last=performance.now();
-  if(CUR==='rhythm'){if(st.paused)pauseAt=performance.now()/1000;else if(pauseAt){pauseAcc+=performance.now()/1000-pauseAt;pauseAt=0}
+  if(CUR==='rhythm'){if(st.paused&&st.holding){st.holding.forEach((h,l)=>{if(h){h.n.hold='broken';st.holding[l]=null}})}
+    if(st.paused)pauseAt=performance.now()/1000;else if(pauseAt){pauseAcc+=performance.now()/1000-pauseAt;pauseAt=0}
     if(AC){try{st.paused?AC.suspend():AC.resume()}catch(e){}}}}
 let lastRec=null;
 function gameOver(cause){
@@ -920,15 +922,26 @@ function newRhythm(){pauseAcc=0;pauseAt=0;const t0=gClock()+.6;return {t0,nextT:
   over:false,paused:false,judge:null,pMove:null,stare:-9,last:0,anns:[],song:1,lanePrev:[],queue:[]}}
 const lat=()=>audioOK()?((AC.outputLatency||0)+(AC.baseLatency||0)):0;
 const rNow=()=>gClock()-lat();
-function pickLane(R){let l=Math.floor(Math.random()*3);const p=R.lanePrev;if(p.length>=2&&p[p.length-1]===l&&p[p.length-2]===l)l=(l+1+Math.floor(Math.random()*2))%3;p.push(l);if(p.length>4)p.shift();return l}
+function pickLane(R,t){const busy=R.busy||[0,0,0];let free=[0,1,2].filter(l=>(busy[l]||0)<=t);if(!free.length)return -1;let l=pick(free);const p=R.lanePrev;
+  if(free.length>1&&p.length>=2&&p[p.length-1]===l&&p[p.length-2]===l){const o=free.filter(z=>z!==l);l=pick(o)}p.push(l);if(p.length>4)p.shift();return l}
 function genNotes(R,b,t,spb){
   if(b<8)return;
   const lv=R.level;
   const onBeat=lv>=1||b%2===0;
-  if(onBeat){const l=pickLane(R);R.notes.push({t,lane:l});
-    if(lv>=3&&Math.random()<.12){let l2=(l+1+Math.floor(Math.random()*2))%3;R.notes.push({t,lane:l2})}}
+  R.busy=R.busy||[0,0,0];
+  if(onBeat){const l=pickLane(R,t);
+    if(l>=0){
+      const holdP=b<14?0:[.18,.2,.22,.25,.27,.3][Math.min(lv,5)];
+      const anyHold=R.busy.some(v=>v>t);
+      if(!anyHold&&Math.random()<holdP){const beats=lv>=3&&Math.random()<.4?3:2;const dur=spb*beats;
+        R.notes.push({t,lane:l,dur,hold:'wait'});R.busy[l]=t+dur+spb*.45;
+      }else{
+        R.notes.push({t,lane:l});
+        if(lv>=3&&Math.random()<.12){const l2=pickLane(R,t);if(l2>=0&&l2!==l)R.notes.push({t,lane:l2})}
+      }
+    }}
   const off=[0,0,.28,.42,.55,.65][Math.min(lv,5)];
-  if(Math.random()<off)R.notes.push({t:t+spb/2,lane:pickLane(R)});
+  if(Math.random()<off){const l=pickLane(R,t+spb/2);if(l>=0)R.notes.push({t:t+spb/2,lane:l})}
 }
 function rSchedule(){
   const R=Rm;if(!R||R.over||R.paused)return;
@@ -949,7 +962,7 @@ function rSchedule(){
 function scrollT(R){return Math.max(1,1.6-R.level*.1)}
 
 /* ---- 입력 ---- */
-function rTap(lane){
+function rTap(lane,pid){
   const R=Rm;if(!R||R.over||R.paused)return;
   const now=rNow();R.pMove={lane,t:now};
   let best=null,bd=1;
@@ -959,26 +972,45 @@ function rTap(lane){
     if(bd<=.055){R.perfect++;R.combo++;R.score+=100+Math.floor(R.combo/10)*10;R.sus=Math.max(0,R.sus-4);R.judge={txt:'PERFECT',col:'#fff9ec',t:now,lane};(R.fx3=R.fx3||[]).push({lane,t:now,perfect:true,seed:Math.random()*6})}
     else{R.good++;R.combo++;R.score+=50;R.sus=Math.max(0,R.sus-1.5);R.judge={txt:'GOOD',col:'#f2a93b',t:now,lane};(R.fx3=R.fx3||[]).push({lane,t:now,perfect:false,seed:Math.random()*6})}
     R.maxCombo=Math.max(R.maxCombo,R.combo);
+    if(best.dur){best.hold='holding';best.tick=best.t+best.dur/4;(R.holding=R.holding||[null,null,null])[lane]={n:best,pid}}
   }else{R.sus+=4;R.judge={txt:'엇박!',col:'#ff9a7a',t:now,lane};R.stare=now}
   if(R.sus>=100)rOver();
 }
+/* ---- 홀드(길게 누르기) ---- */
+function holdOK(lane,n){const R=Rm;n.hold='ok';R.holding[lane]=null;R.combo++;R.maxCombo=Math.max(R.maxCombo,R.combo);R.score+=100;R.sus=Math.max(0,R.sus-3);
+  const now=rNow();R.judge={txt:'HOLD OK',col:'#fff9ec',t:now,lane};(R.fx3=R.fx3||[]).push({lane,t:now,perfect:true,seed:Math.random()*6});beep(1318,.06,'triangle',.04)}
+function holdBreak(lane,n){const R=Rm;n.hold='broken';R.holding[lane]=null;R.combo=0;R.sus+=8;const now=rNow();R.stare=now;R.judge={txt:'끊겼다!',col:'#ff9a7a',t:now,lane};if(R.sus>=100)rOver()}
+function rRelease(lane){const R=Rm;if(!R||!R.holding||!R.holding[lane])return;const {n}=R.holding[lane];const now=rNow();
+  if(now>=n.t+n.dur-.15)holdOK(lane,n);else holdBreak(lane,n)}
+function releasePointer(pid){const R=Rm;if(!R||!R.holding)return;for(let l=0;l<3;l++){const h=R.holding[l];if(h&&h.pid===pid)rRelease(l)}}
+cv3.addEventListener('pointerup',e=>releasePointer(e.pointerId));
+cv3.addEventListener('pointercancel',e=>releasePointer(e.pointerId));
 cv3.addEventListener('pointerdown',e=>{
-  if(!Rm)return;if(AC&&AC.state!=='running'&&!Rm.paused){try{AC.resume()}catch(e){}}const r=cv3.getBoundingClientRect();const x=(e.clientX-r.left)/r.width*W,y=(e.clientY-r.top)/r.height*H;
-  if(y<TOP_Y-40)return;rTap(clamp(Math.floor((x-LANE_X[0])/LANE_W),0,2));e.preventDefault();
+  if(!Rm)return;try{cv3.setPointerCapture(e.pointerId)}catch(_){}if(AC&&AC.state!=='running'&&!Rm.paused){try{AC.resume()}catch(e){}}const r=cv3.getBoundingClientRect();const x=(e.clientX-r.left)/r.width*W,y=(e.clientY-r.top)/r.height*H;
+  if(y<TOP_Y-40)return;rTap(clamp(Math.floor((x-LANE_X[0])/LANE_W),0,2),e.pointerId);e.preventDefault();
 });
 document.addEventListener('keydown',e=>{
   if($('#play3').hidden||!Rm||Rm.over||e.repeat)return;
   const k=e.key.toLowerCase();
   if(k==='p'||k==='escape'){togglePause();e.preventDefault();return}
   const m={arrowleft:0,a:0,j:0,arrowup:1,s:1,' ':1,k:1,arrowdown:1,arrowright:2,d:2,l:2};
-  if(k in m){rTap(m[k]);e.preventDefault()}
+  if(k in m){rTap(m[k],'key'+m[k]);e.preventDefault()}
+});
+document.addEventListener('keyup',e=>{
+  if($('#play3').hidden||!Rm)return;
+  const m={arrowleft:0,a:0,j:0,arrowup:1,s:1,' ':1,k:1,arrowdown:1,arrowright:2,d:2,l:2};const k=e.key.toLowerCase();
+  if(k in m)rRelease(m[k]);
 });
 
 /* ---- 업데이트 & 그리기 ---- */
 function rUpdate(){
   const R=Rm,now=rNow();
   for(const n of R.notes){if(!n.done&&now-n.t>.15){n.done=true;n.missed=true;R.miss++;R.combo=0;R.sus+=13;R.stare=now;R.judge={txt:'MISS',col:'#a0907a',t:now,lane:n.lane}}}
-  R.notes=R.notes.filter(n=>!(n.done&&now-n.t>.5));
+  for(const n of R.notes){if(n.dur&&n.missed&&n.hold==='wait')n.hold='missed'}
+  if(R.holding)for(let l=0;l<3;l++){const h=R.holding[l];if(!h)continue;const n=h.n;
+    while(now>=n.tick&&n.tick<n.t+n.dur){R.score+=15;n.tick+=n.dur/4}
+    if(now>=n.t+n.dur)holdOK(l,n)}
+  R.notes=R.notes.filter(n=>!(n.done&&now-(n.t+(n.dur||0))>.5));
   if(R.anns.length&&R.anns[0].t<=now){const a=R.anns.shift();ann3(a.txt)}
   if(R.sus>=100){R.sus=100;rOver();return}
   $('#rScore').textContent=R.score.toLocaleString('ko-KR');$('#rCombo').textContent=R.combo;
@@ -1083,7 +1115,7 @@ function rDraw(){
   x.fillStyle=`rgba(255,249,236,${.18+.12*pulse})`;x.fillRect(hp.left,HIT_Y-1,hp.lw*3,2);
   for(let l=0;l<3;l++){
     const rx=hp.left+l*hp.lw+7,rw=hp.lw-14,rh=24,ry=HIT_Y-rh/2;
-    const near=R.notes.some(n=>!n.done&&n.lane===l&&Math.abs(n.t-now)<.06);
+    const near=R.notes.some(n=>!n.done&&n.lane===l&&Math.abs(n.t-now)<.06)||!!(R.holding&&R.holding[l]);
     const pressed=R.pMove&&R.pMove.lane===l&&now-R.pMove.t<.1;
     x.fillStyle=near?'rgba(255,249,236,.55)':pressed?'rgba(232,80,31,.7)':`rgba(232,80,31,${.18+.2*pulse})`;rr(rx,ry,rw,rh,12);x.fill();
     x.strokeStyle=CR;x.lineWidth=3;rr(rx,ry,rw,rh,12);x.stroke();
@@ -1100,6 +1132,20 @@ function rDraw(){
     x.font='11px "Silkscreen", monospace';x.fillStyle=CR;x.fillText('COMBO',180,TOP_Y+102)}
   // 노트 (판정 자리와 같은 모양 — 겹치는 순간이 정답)
   const st=scrollT(R);
+  const yOf=tt=>HIT_Y-(tt-now)/st*(HIT_Y-TOP_Y);
+  for(const n of R.notes){if(!n.dur||n.hold==='ok')continue;
+    const holding=n.hold==='holding';const dead=n.hold==='broken'||n.hold==='missed';
+    const yT=Math.max(TOP_Y-4,yOf(n.t+n.dur)),yH=Math.min(H+6,holding?HIT_Y:yOf(n.t));if(yH<=yT||yT>H)continue;
+    const a=persp(yT),c=persp(yH);
+    const L=(p,f)=>p.left+n.lane*p.lw+p.lw*f;
+    x.globalAlpha=dead?.3:1;
+    x.fillStyle=dead?'#6a5a4a':holding?`rgba(255,249,236,${.75+.2*pulse})`:'rgba(232,80,31,.85)';
+    x.beginPath();x.moveTo(L(a,.3),yT);x.lineTo(L(a,.7),yT);x.lineTo(L(c,.7),yH);x.lineTo(L(c,.3),yH);x.closePath();x.fill();
+    x.strokeStyle=dead?'#8a7a6a':CR;x.lineWidth=2;x.stroke();
+    // 꼬리 끝
+    const tw=a.lw*.5,th=10*a.sc;x.fillStyle=dead?'#8a7a6a':CR;rr(L(a,.25),yT-th/2,tw,th,5);x.fill();
+    if(holding){for(let i=0;i<4;i++){const sx=L(c,.2+Math.random()*.6),sy=HIT_Y-Math.random()*30;x.fillStyle=i%2?BR:CR;x.fillRect(sx,sy,3,3)}}
+    x.globalAlpha=1}
   for(const n of R.notes){if(n.done&&!n.missed)continue;
     const y=HIT_Y-(n.t-now)/st*(HIT_Y-TOP_Y);if(y<TOP_Y-6||y>H+10)continue;
     const p=persp(y),w=p.lw-14*p.sc,h=24*p.sc,nx=p.left+n.lane*p.lw+7*p.sc,ny=y-h/2;
