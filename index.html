@@ -376,7 +376,7 @@ function renderHub(){
       const top=getRank(g.id)[0];const b=document.createElement('div');b.className='best';const setBest=(t,label)=>{b.textContent=t?`${label} 1위 · ${t.name} ${fmtScore(g.id,t.score)}${g.unit?'':'점'}`:'아직 기록 없음'};setBest(top,'이 기기');c.appendChild(b);
       fetchGlobal(g.id).then(l=>setBest(l[0],'전체')).catch(()=>{});
       const row=document.createElement('div');row.className='row';
-      const pl=document.createElement('button');pl.className='btn hot';pl.type='button';pl.textContent='플레이';pl.onclick=()=>{audioOn();show(g.how)};
+      const pl=document.createElement('button');pl.className='btn hot';pl.type='button';pl.textContent='플레이';pl.onclick=()=>{audioOn();if(g.id==='rhythm')loadMusic();show(g.how)};
       const rk=document.createElement('button');rk.className='btn';rk.type='button';rk.textContent='순위';rk.onclick=()=>{$('#rvTitle').textContent=g.name;show('#ovRankView');showRankInto($('#rvList'),$('#rvNote'),g.id,null)};
       row.append(pl,rk);c.appendChild(row);
     }
@@ -895,13 +895,19 @@ function rAudioInit(){
   return true;
 }
 function env(g,t,v,dec){g.gain.setValueAtTime(v,t);g.gain.exponentialRampToValueAtTime(.0001,t+dec)}
-function kick(t){const o=AC.createOscillator(),g=AC.createGain();o.type='sine';o.frequency.setValueAtTime(150,t);o.frequency.exponentialRampToValueAtTime(45,t+.11);env(g,t,1,.32);o.connect(g).connect(OUT);o.start(t);o.stop(t+.35)}
+function kick(t,v=1){const o=AC.createOscillator(),g=AC.createGain();o.type='sine';o.frequency.setValueAtTime(150,t);o.frequency.exponentialRampToValueAtTime(45,t+.11);env(g,t,v,.32);o.connect(g).connect(OUT);o.start(t);o.stop(t+.35)}
 function noiseHit(t,type,freq,v,dec,q){const s=AC.createBufferSource();s.buffer=NOISE;const f=AC.createBiquadFilter();f.type=type;f.frequency.value=freq;if(q)f.Q.value=q;const g=AC.createGain();env(g,t,v,dec);s.connect(f).connect(g).connect(OUT);s.start(t,Math.random()*.5);s.stop(t+dec+.02)}
 function hat(t,v){noiseHit(t,'highpass',7500,v,.045)}
 function clap(t){noiseHit(t,'bandpass',1700,.45,.14,.9);noiseHit(t+.012,'bandpass',1500,.3,.1,.9)}
 function bass(t,f,d){const o=AC.createOscillator(),lp=AC.createBiquadFilter(),g=AC.createGain();o.type='sawtooth';o.frequency.value=f;lp.type='lowpass';lp.frequency.value=520;env(g,t,.32,d);o.connect(lp).connect(g).connect(OUT);o.start(t);o.stop(t+d+.02)}
 function stab(t,fs){fs.forEach(f=>{const o=AC.createOscillator(),lp=AC.createBiquadFilter(),g=AC.createGain();o.type='square';o.frequency.value=f;lp.type='lowpass';lp.frequency.value=1900;env(g,t,.045,.2);o.connect(lp).connect(g).connect(OUT);o.start(t);o.stop(t+.22)})}
 const ROOTS=[55,43.65,49,41.2],CHORDS=[[220,261.6,329.6,392],[174.6,220,261.6,329.6],[196,246.9,293.7,392],[164.8,196,246.9,293.7]];
+/* 실제 음악 위에 얹는 드럼 (킥·하이햇·2·4박 박수) */
+function playDrums(b,t,spb,lv){
+  const bi=b%4;
+  kick(t,.75);hat(t+spb/2,.18);if(lv>=2){hat(t+spb/4,.06);hat(t+spb*3/4,.06)}
+  if(bi===1||bi===3)clap(t);
+}
 function playBeat(b,t,spb,lv){
   const bar=Math.floor(b/4)%4,bi=b%4;
   kick(t);hat(t+spb/2,.22);if(lv>=2)hat(t+spb/4,.08),hat(t+spb*3/4,.08);
@@ -913,10 +919,20 @@ function scratch(){try{const t=AC.currentTime,o=AC.createOscillator(),g=AC.creat
 
 /* ---- 상태 ---- */
 let pauseAcc=0,pauseAt=0;
-const gClock=()=>(pauseAt||performance.now()/1000)-pauseAcc;
+/* 음악: 128.12 BPM, 첫 박 0.24초, 1~8마디 인트로 → 끝나면 9~79마디를 끊김 없이 반복 */
+const MUSIC={url:'ijari-party.mp3',bpm:128.12,offset:.24,loopFromBeat:32,loopToBeat:316};
+let MUSIC_BUF=null,musicLoading=null,musicSrc=null;
+function loadMusic(){
+  if(MUSIC_BUF)return Promise.resolve(MUSIC_BUF);
+  if(!AC)return Promise.resolve(null);
+  if(!musicLoading)musicLoading=fetch(MUSIC.url).then(r=>{if(!r.ok)throw new Error('http');return r.arrayBuffer()})
+    .then(ab=>new Promise((res,rej)=>AC.decodeAudioData(ab,res,rej))).then(b=>(MUSIC_BUF=b)).catch(()=>{musicLoading=null;return null});
+  return musicLoading;
+}
+const gClock=()=>(Rm&&Rm.music&&AC)?AC.currentTime:(pauseAt||performance.now()/1000)-pauseAcc;
 const audioOK=()=>!!(AC&&OUT&&AC.state==='running');
-const toAudio=t=>t-gClock()+AC.currentTime;
-function newRhythm(){pauseAcc=0;pauseAt=0;const t0=gClock()+.6;return {t0,nextT:t0,beat:0,bpm:118,level:0,notes:[],beats:[],score:0,combo:0,maxCombo:0,perfect:0,good:0,miss:0,sus:0,
+const toAudio=t=>(Rm&&Rm.music)?t:t-gClock()+AC.currentTime;
+function newRhythm(t0,bpm){pauseAcc=0;pauseAt=0;t0=t0==null?gClock()+.6:t0;return {t0,nextT:t0,beat:0,bpm:bpm||118,level:0,notes:[],beats:[],score:0,combo:0,maxCombo:0,perfect:0,good:0,miss:0,sus:0,
   over:false,paused:false,judge:null,pMove:null,stare:-9,last:0,anns:[],song:1,lanePrev:[],queue:[]}}
 const lat=()=>audioOK()?((AC.outputLatency||0)+(AC.baseLatency||0)):0;
 const rNow=()=>gClock()-lat();
@@ -938,7 +954,7 @@ function genNotes(R,b,t,spb){
         if(lv>=3&&Math.random()<.12){const l2=pickLane(R,t);if(l2>=0&&l2!==l)R.notes.push({t,lane:l2})}
       }
     }}
-  const off=[0,0,.28,.42,.55,.65][Math.min(lv,5)];
+  const off=[0,0,.28,.42,.55,.65,.72,.78][Math.min(lv,7)];
   if(Math.random()<off){const l=pickLane(R,t+spb/2);if(l>=0)R.notes.push({t:t+spb/2,lane:l})}
 }
 function rSchedule(){
@@ -949,12 +965,13 @@ function rSchedule(){
     R.queue.push({b:R.beat,t:R.nextT,spb,lv:R.level});genNotes(R,R.beat,R.nextT,spb);
     if(R.beat>=4&&R.beat<8)R.anns.push({t:R.nextT,txt:['3','2','1','GO!'][R.beat-4]});
     R.beat++;R.nextT+=spb;
-    if(R.beat>=40&&(R.beat-8)%32===0){R.level++;R.song++;R.bpm=Math.min(142,R.bpm+4);
-      R.anns.push({t:R.nextT,txt:`${R.song}곡째! BPM ${R.bpm}`})}
+    if(R.beat>=40&&(R.beat-8)%32===0){R.level++;R.song++;
+      if(R.music)R.anns.push({t:R.nextT,txt:`${R.song}라운드!`});
+      else{R.bpm=Math.min(142,R.bpm+4);R.anns.push({t:R.nextT,txt:`${R.song}곡째! BPM ${R.bpm}`})}}
   }
   // 소리는 0.15초 앞만 예약
   while(R.queue.length&&R.queue[0].t<gClock()+.15){
-    const q=R.queue.shift();if(audioOK()){try{playBeat(q.b,Math.max(AC.currentTime,toAudio(q.t)),q.spb,q.lv)}catch(e){}}R.beats.push({t:q.t,spb:q.spb});if(R.beats.length>8)R.beats.shift();
+    const q=R.queue.shift();if(audioOK()){try{(R.music?playDrums:playBeat)(q.b,Math.max(AC.currentTime,toAudio(q.t)),q.spb,q.lv)}catch(e){}}R.beats.push({t:q.t,spb:q.spb});if(R.beats.length>8)R.beats.shift();
   }
 }
 function scrollT(R){return Math.max(1,1.6-R.level*.1)}
@@ -1164,21 +1181,35 @@ function rDraw(){
   if(R.sus>=65){x.fillStyle=`rgba(210,59,38,${.12+.1*pulse})`;x.fillRect(0,0,W,H)}
 }
 function loop3(){if(!Rm)return;if(!Rm.paused&&!Rm.over)rUpdate();if(Rm)rDraw();if(Rm&&!Rm.over)raf3=requestAnimationFrame(loop3)}
-function stopRhythm(){clearInterval(schedIv);cancelAnimationFrame(raf3);if(OUT&&AC){try{OUT.gain.cancelScheduledValues(AC.currentTime);OUT.gain.setValueAtTime(0,AC.currentTime)}catch(e){}}}
+function stopRhythm(){clearInterval(schedIv);cancelAnimationFrame(raf3);if(musicSrc){try{musicSrc.stop()}catch(e){}musicSrc=null}if(OUT&&AC){try{OUT.gain.cancelScheduledValues(AC.currentTime);OUT.gain.setValueAtTime(0,AC.currentTime)}catch(e){}}}
 function startRhythm(){
   try{rAudioInit()}catch(e){}
   stopRhythm();cancelAnimationFrame(raf);cancelAnimationFrame(raf2);S=null;I=null;CUR='rhythm';
   if(AC){try{if(AC.state!=='running')AC.resume();if(OUT){OUT.gain.cancelScheduledValues(AC.currentTime);OUT.gain.setValueAtTime(.7,AC.currentTime)}}catch(e){}}
-  Rm=newRhythm();
   $('#hub').hidden=true;$('#play').hidden=true;$('#play2').hidden=true;$('#play3').hidden=false;show('');$('#announce3').hidden=true;fit();
-  ann3('파티에 섞여 들어가자…');
-  schedIv=setInterval(rSchedule,25);rSchedule();raf3=requestAnimationFrame(loop3);
+  const token=startRhythm.token=(startRhythm.token||0)+1;
+  const go=buf=>{
+    if(token!==startRhythm.token||CUR!=='rhythm'||$('#play3').hidden)return;
+    if(buf&&audioOK()){
+      const A0=AC.currentTime+.25;
+      musicSrc=AC.createBufferSource();musicSrc.buffer=buf;musicSrc.loop=true;
+      const spb=60/MUSIC.bpm;musicSrc.loopStart=MUSIC.offset+MUSIC.loopFromBeat*spb;musicSrc.loopEnd=Math.min(buf.duration,MUSIC.offset+MUSIC.loopToBeat*spb);
+      const mg=AC.createGain();mg.gain.value=.9;musicSrc.connect(mg).connect(OUT);musicSrc.start(A0);
+      Rm=newRhythm(A0+MUSIC.offset,MUSIC.bpm);Rm.music=true;
+    }else Rm=newRhythm();
+    ann3('파티에 섞여 들어가자…');
+    schedIv=setInterval(rSchedule,25);rSchedule();raf3=requestAnimationFrame(loop3);
+  };
+  Rm=null;
+  const c=c3;c.fillStyle='#22120a';c.fillRect(0,0,W,H);c.fillStyle='#fff9ec';c.font='20px "Do Hyeon", sans-serif';c.textAlign='center';c.textBaseline='middle';c.fillText('음악 불러오는 중…',W/2,H/2);
+  Promise.race([loadMusic(),new Promise(r=>setTimeout(()=>r(null),7000))]).then(go);
   setTimeout(()=>{if(Rm&&!Rm.over&&!audioOK())ann3('소리가 안 나면 화면을 한 번 눌러 주세요')},1200);
 }
 function alertNoAudio(){$('#how3Msg').textContent='이 브라우저에서 소리를 켤 수 없어요. 다른 브라우저로 해 주세요.'}
 function rOver(){
   const R=Rm;if(R.over)return;R.over=true;clearInterval(schedIv);
   try{OUT.gain.setTargetAtTime(0,AC.currentTime,.05)}catch(e){}if(audioOK())scratch();
+  setTimeout(()=>{if(musicSrc&&Rm===R){try{musicSrc.stop()}catch(e){}musicSrc=null}},400);
   R.stare=rNow()+99;rDraw();
   const secs=Math.max(0,gClock()-R.t0);
   showOver('rhythm',{cause:'BUSTED · '+mmss(secs),title:'정체가 들통났다!',score:R.score,time:secs,
