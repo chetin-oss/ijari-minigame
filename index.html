@@ -202,7 +202,7 @@ canvas{image-rendering:pixelated;image-rendering:crisp-edges}
 <div class="overlay" id="ovHow3" hidden>
   <div class="card">
     <h2><small>GAME 3</small>음악모임은 처음입니다만</h2>
-    <p>오랜만에 이자리에 왔는데… 오늘은 영업을 안 하는 날! 대관한 음악모임이 한창이에요. DJ는 죠니, 손님은 밤쥐랑 동물 친구들. 들키지 않게 자연스럽게 섞여야 해요.</p>
+    <p>이자리에 갔는데, 오늘은 영업을 안 하는 날이네요..? 대신 분위기 좋은 음악 모임이 열리고 있어요. 함께 비트를 맞추며, 음악모임 회원인 척 해요. 박자를 못 맞추면 걸려요!</p>
     <div class="howto">
       <div><b>박자</b><span>떨어지는 노트가 하얀 선에 닿는 순간, 그 줄(왼쪽·점프·오른쪽)을 눌러 같이 흔들어요.</span></div>
       <div><b>판정</b><span>딱 맞으면 PERFECT, 조금 어긋나면 GOOD. 놓치거나 엇박에 누르면 동물들이 쳐다봐요.</span></div>
@@ -281,7 +281,7 @@ function beep(f,d,type='square',v=.05){try{if(!AC)return;const o=AC.createOscill
 const GAMES=[
  {id:'slide',how:'#ovHow',unit:'',no:'GAME 1',name:'오늘따라 손님이 많네, 감사합니다',desc:'사장 죠니가 밀려드는 손님에게 술을 쭉 밀어 서빙! 처음엔 병맥주만, 점점 손님이 늘고 와인까지. 주문보다 술이 많이 나가면 끝.',ready:true},
  {id:'ice',how:'#ovHow2',unit:'m',no:'GAME 2',name:'얼음 금방 사올게, 나는 러너니까.',desc:'얼음이 다 떨어졌다! 사장 죠니가 군자 골목을 달려요. 장애물은 점프로 피하고, 녹는 얼음은 얼음을 주워 채우세요.',ready:true},
- {id:'rhythm',how:'#ovHow3',unit:'',no:'GAME 3',name:'음악모임은 처음입니다만',desc:'영업 안 하는 날, 이자리는 대관 음악모임 중! DJ 죠니의 비트에 맞춰 동물들과 똑같이 흔들어야 정체가 안 들켜요.',ready:true},
+ {id:'rhythm',how:'#ovHow3',unit:'',no:'GAME 3',name:'음악모임은 처음입니다만',desc:'이자리에 갔는데, 오늘은 영업을 안 하는 날이네요..? 대신 분위기 좋은 음악 모임이 열리고 있어요. 함께 비트를 맞추며, 음악모임 회원인 척 해요. 박자를 못 맞추면 걸려요!',ready:true},
 ];
 const rankKey=id=>'ijari-mg-rank-'+id;
 /* ---------- 전체 순위 (Firebase Firestore REST) ---------- */
