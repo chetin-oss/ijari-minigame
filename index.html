@@ -150,7 +150,6 @@ canvas{image-rendering:pixelated;image-rendering:crisp-edges}
   </header>
   <section class="lobby" aria-label="이자리 가게 안">
     <canvas id="lobby" width="993" height="800" aria-label="이자리 가게 안 — 카운터, 냉장고, 턴테이블, 포스터를 눌러 게임을 시작하세요"></canvas>
-    <p class="lobbyHint">가게 안을 눌러 보세요 · <b>카운터</b> 게임1 · <b>냉장고</b> 게임2 · <b>턴테이블</b> 게임3 · <b>포스터</b> 순위표</p>
   </section>
   <section class="cards" id="cards"></section>
   <p class="foot">순위는 모든 플레이어가 함께 보는 전체 순위예요. 인터넷 연결이 안 되면 이 기기에 남긴 기록을 대신 보여줘요.</p>
@@ -1261,7 +1260,7 @@ const LOB_W=993,LOB_H=800,LS=LOB_W/1402,lcv=$('#lobby'),lx=lcv.getContext('2d');
 /* GitHub Pages(…github.io)에서는 메인 그림 화면을 숨기고 게임 목록만 보여줌 */
 const SHOW_LOBBY=!/github\.io$/i.test(location.hostname);
 if(!SHOW_LOBBY){const sec=document.querySelector('.lobby');if(sec)sec.hidden=true}
-const LOB_BG=new Image();let lobReady=false;LOB_BG.onload=()=>{lobReady=true};if(SHOW_LOBBY)LOB_BG.src='ijari-lobby2.webp';
+const LOB_BG=new Image();let lobReady=false;LOB_BG.onload=()=>{lobReady=true};if(SHOW_LOBBY)LOB_BG.src='ijari-lobby3.webp';
 let lobbyRaf=0,lobbyHover=null,bamSayT=-9,johnnySayT=-9;
 /* 그림(993×800) 속 위치: 죠니·밤쥐는 그림에 그려져 있음 */
 const HOT=[
@@ -1270,7 +1269,6 @@ const HOT=[
  {id:'rhythm',x:462,y:285,w:122,h:72,tag:'3',label:'음악모임',tx:590,ty:224,extra:[[143,48,60,74],[648,48,62,74]]},
  {id:'rank',x:834,y:95,w:110,h:152,tag:'★',label:'순위표',tx:888,ty:86},
  {id:'list',x:768,y:282,w:114,h:190,tag:'▤',label:'게임 목록',tx:826,ty:276},
- {id:'bam',x:78,y:498,w:96,h:116,tag:'',label:''},
 ];
 function bubble(txt,cx,by,bg){const x=lx;x.font=Math.round(22)+'px "Do Hyeon", sans-serif';const w=x.measureText(txt).width+24,bx=clamp(cx-w/2,6,LOB_W-w-6);
   x.fillStyle='#22120a';x.fillRect(bx-3,by-3,w+6,38);x.fillStyle=bg;x.fillRect(bx,by,w,32);
@@ -1282,23 +1280,6 @@ function drawLobby(t){
   x.drawImage(LOB_BG,0,0,LOB_W,LOB_H);
   // 펜던트 조명 은은하게
   const gl=x.createRadialGradient(400,105,8,400,105,190);gl.addColorStop(0,`rgba(255,214,150,${.10+.05*Math.sin(t*2)})`);gl.addColorStop(1,'rgba(255,214,150,0)');x.fillStyle=gl;x.fillRect(210,0,380,300);
-  // 죠니 인사
-  if((t-johnnySayT<2.2)||((t%9)>6.6&&(t%9)<8.6))bubble('어서오세요~ 이자리예요!',414,148,'#fff9ec');
-  // 밤쥐
-  if(t-bamSayT<1.8)bubble('사장님 저 왔어요!',122,452,'#fff3c4');
-  // 호버 강조 & 라벨
-  for(const h of HOT){
-    if(!h.tag)continue;
-    const hov=lobbyHover===h.id;
-    if(hov){x.strokeStyle='#e8501f';x.lineWidth=4;x.setLineDash([12,8]);x.strokeRect(h.x,h.y,h.w,h.h);(h.extra||[]).forEach(([a,b,c,d])=>x.strokeRect(a,b,c,d));x.setLineDash([])}
-    const k=clamp(760/(lcv.clientWidth||760),1,1.9)*LS,LHh=46*k;
-    const bob=Math.round(Math.sin(t*3+h.tx)*4),txt=h.tag+'  '+h.label;
-    x.font=Math.round(34*k)+'px "Do Hyeon", sans-serif';const w=x.measureText(txt).width+36*k;const bx=clamp(h.tx-w/2,6,LOB_W-w-6),by=h.ty-LHh+bob;
-    x.fillStyle='#22120a';x.fillRect(bx+3,by+3,w,LHh);x.fillStyle=hov?'#e8501f':'#fff9ec';x.fillRect(bx,by,w,LHh);
-    x.strokeStyle='#22120a';x.lineWidth=3;x.strokeRect(bx,by,w,LHh);
-    x.fillStyle=hov?'#fff9ec':'#22120a';x.textAlign='left';x.textBaseline='middle';x.fillText(txt,bx+18*k,by+LHh/2+2);
-    const ax=clamp(h.tx,bx+14,bx+w-14);x.fillStyle=hov?'#e8501f':'#fff9ec';x.beginPath();x.moveTo(ax-10*k,by+LHh);x.lineTo(ax+10*k,by+LHh);x.lineTo(ax,by+LHh+14*k);x.fill();
-  }
 }
 function lobbyLoop(now){
   if($('#hub').hidden){lobbyRaf=0;return}
@@ -1307,15 +1288,12 @@ function lobbyLoop(now){
 function startLobby(){if(SHOW_LOBBY&&!lobbyRaf)lobbyRaf=requestAnimationFrame(lobbyLoop)}
 function hotAt(e){const r=lcv.getBoundingClientRect();const px=(e.clientX-r.left)/r.width*LOB_W,py=(e.clientY-r.top)/r.height*LOB_H;
   const inR=(a,b,c,d)=>px>=a&&px<=a+c&&py>=b&&py<=b+d;
-  for(const h of [...HOT].reverse()){if(h.tag&&inR(h.tx-95,h.ty-38,190,44))return h}
   for(const h of [...HOT].reverse()){if(inR(h.x,h.y,h.w,h.h)||(h.extra||[]).some(q=>inR(...q)))return h}return null}
-lcv.addEventListener('pointermove',e=>{const h=hotAt(e);lobbyHover=h&&h.tag?h.id:null;lcv.style.cursor=h?'pointer':'default'});
+lcv.addEventListener('pointermove',e=>{const h=hotAt(e);lcv.style.cursor=h?'pointer':'default'});
 lcv.addEventListener('pointerleave',()=>{lobbyHover=null});
 lcv.addEventListener('click',e=>{const h=hotAt(e);if(!h)return;audioOn();
-  if(h.id==='bam'){bamSayT=performance.now()/1000;beep(784,.08,'triangle');setTimeout(()=>beep(988,.1,'triangle'),90);return}
   if(h.id==='rank'){openRanks('slide');return}
   if(h.id==='list'){$('#cards').scrollIntoView({behavior:'smooth',block:'start'});return}
-  if(h.id==='slide'){johnnySayT=performance.now()/1000}
   const g=GAMES.find(z=>z.id===h.id);if(g){if(g.id==='rhythm'&&typeof USE_MUSIC_FILE!=='undefined'&&USE_MUSIC_FILE)loadMusic();show(g.how)}});
 function openRanks(gid){
   const tabs=$('#rvTabs');tabs.innerHTML='';
