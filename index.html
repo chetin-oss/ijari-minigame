@@ -35,6 +35,12 @@ canvas{image-rendering:pixelated;image-rendering:crisp-edges}
 
 /* ---- Hub ---- */
 #hub{max-width:860px;margin:0 auto;padding:18px max(16px,env(safe-area-inset-left,0px)) 40px;display:grid;gap:18px}
+/* 로비 모드: 가게 장면만 화면 가득 */
+body.lobbyMode #hub{max-width:none;min-height:100vh;min-height:100dvh;padding:0;display:flex;align-items:center;justify-content:center;background:#1a0e07}
+body.lobbyMode #hub>.hero,body.lobbyMode #hub>.cards,body.lobbyMode #hub>.foot{display:none}
+body.lobbyMode .lobby canvas{width:min(100vw,calc(100dvh*993/800));border:none;box-shadow:none}
+.pick{display:grid;gap:8px}
+.pick .btn{text-align:left}
 .hero{background:var(--brand);border:3px solid var(--ink);box-shadow:6px 6px 0 #22120a;padding:18px 20px;display:flex;align-items:center;gap:18px;color:var(--paper);position:relative;overflow:hidden}
 .hero .logo{width:120px;flex:none}
 .lobby{display:grid;gap:8px}
@@ -255,6 +261,15 @@ canvas{image-rendering:pixelated;image-rendering:crisp-edges}
   </div>
 </div>
 
+<!-- 게임 고르기 (오락기) -->
+<div class="overlay" id="ovPick" hidden>
+  <div class="card">
+    <h2><small>ARCADE</small>어떤 게임 할까?</h2>
+    <div class="pick" id="pickList"></div>
+    <div class="row-btns"><button class="btn" type="button" onclick="document.getElementById('ovPick').hidden=true">돌아가기</button></div>
+  </div>
+</div>
+
 <!-- 순위표 -->
 <div class="overlay" id="ovRankView" hidden>
   <div class="card">
@@ -396,7 +411,7 @@ function renderHub(){
     box.appendChild(c);
   });
 }
-const OVS=['#ovHow','#ovHow2','#ovHow3','#ovOver','#ovRankView','#ovPause'];
+const OVS=['#ovHow','#ovHow2','#ovHow3','#ovOver','#ovRankView','#ovPause','#ovPick'];
 function show(id){OVS.forEach(s=>$(s).hidden=s!==id)}
 
 /* ================= GAME 1 : 오늘따라 손님이 많네, 감사합니다 ================= */
@@ -1259,7 +1274,7 @@ function thumbRhythm(){const c=document.createElement('canvas');c.width=120;c.he
 const LOB_W=993,LOB_H=800,LS=LOB_W/1402,lcv=$('#lobby'),lx=lcv.getContext('2d');
 /* GitHub Pages(…github.io)에서는 메인 그림 화면을 숨기고 게임 목록만 보여줌 */
 const SHOW_LOBBY=!/github\.io$/i.test(location.hostname);
-if(!SHOW_LOBBY){const sec=document.querySelector('.lobby');if(sec)sec.hidden=true}
+if(!SHOW_LOBBY){const sec=document.querySelector('.lobby');if(sec)sec.hidden=true}else document.body.classList.add('lobbyMode');
 const LOB_BG=new Image();let lobReady=false;LOB_BG.onload=()=>{lobReady=true};if(SHOW_LOBBY)LOB_BG.src='ijari-lobby3.webp';
 let lobbyRaf=0,lobbyHover=null,bamSayT=-9,johnnySayT=-9;
 /* 그림(993×800) 속 위치: 죠니·밤쥐는 그림에 그려져 있음 */
@@ -1293,8 +1308,9 @@ lcv.addEventListener('pointermove',e=>{const h=hotAt(e);lcv.style.cursor=h?'poin
 lcv.addEventListener('pointerleave',()=>{lobbyHover=null});
 lcv.addEventListener('click',e=>{const h=hotAt(e);if(!h)return;audioOn();
   if(h.id==='rank'){openRanks('slide');return}
-  if(h.id==='list'){$('#cards').scrollIntoView({behavior:'smooth',block:'start'});return}
+  if(h.id==='list'){openPick();return}
   const g=GAMES.find(z=>z.id===h.id);if(g){if(g.id==='rhythm'&&typeof USE_MUSIC_FILE!=='undefined'&&USE_MUSIC_FILE)loadMusic();show(g.how)}});
+function openPick(){const box=$('#pickList');box.innerHTML='';GAMES.filter(g=>g.ready).forEach(g=>{const b=document.createElement('button');b.type='button';b.className='btn';b.textContent=g.no+' · '+g.name;b.onclick=()=>show(g.how);box.appendChild(b)});show('#ovPick')}
 function openRanks(gid){
   const tabs=$('#rvTabs');tabs.innerHTML='';
   GAMES.filter(g=>g.ready).forEach(g=>{const b=document.createElement('button');b.type='button';b.className='rtab'+(g.id===gid?' on':'');b.textContent=g.no;b.onclick=()=>openRanks(g.id);tabs.appendChild(b)});
